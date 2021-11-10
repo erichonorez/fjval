@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.h5z.jval.Validators.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import org.h5z.jval.JVal.Validator;
+import org.h5z.jval.Core.Validator;
 
 public class ValidatorsUnitTest {
 

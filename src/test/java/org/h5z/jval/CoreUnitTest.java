@@ -1,16 +1,14 @@
 package org.h5z.jval;
 
-import org.h5z.jval.JVal.Validator;
+import org.h5z.jval.Core.Validator;
 import org.junit.jupiter.api.Test;
 
-import static org.h5z.jval.JVal.*;
+import static org.h5z.jval.Core.*;
 import static org.h5z.jval.Validators.*;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-import java.util.List;
-
-public class JValUnitTest {
+public class CoreUnitTest {
 
     @Test
     public void anonymous() {
@@ -26,7 +24,7 @@ public class JValUnitTest {
     public void not_shouldReturnTheNegation() {
         Validator<Integer, String> one = eq(1, () -> "shoult eq to 1");
         Validator<Integer, String> notOne = not(one, () -> "should not be 1");
-        assertTrue(isInvalid(notOne.apply(1)));
+        assertTrue(failed(notOne.apply(1)));
     }
 
     @Test
@@ -41,7 +39,7 @@ public class JValUnitTest {
         Validator<Coord, String> prop = every(
             prop(Coord::x, gt(2, () -> "X should be greater than 2")),
             prop(Coord::y, eq(0, () -> "Y should be equal to 0")),
-            bool((c) -> c.x > c.y, () -> "X should be greater than Y"));
+            cond((c) -> c.x > c.y, () -> "X should be greater than Y"));
 
         assertFalse(isValid(prop.apply(new Coord(1, 0))));
 

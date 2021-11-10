@@ -10,11 +10,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class JVal {
+public final class Core {
 
     /** The class cannot be instanciated */
-    private JVal() {}
-
+    private Core() {}
 
     /**
      * A validator is simply a function take a value and returning a list of errors.
@@ -25,7 +24,7 @@ public final class JVal {
     public interface Validator<T, E> extends Function<T, List<E>> {
 
         @Override
-        public List<E> apply(T t);
+        List<E> apply(T t);
 
     }
 
@@ -33,7 +32,7 @@ public final class JVal {
         return es.isEmpty();
     }
 
-    public static <E> boolean isInvalid(List<E> es) {
+    public static <E> boolean failed(List<E> es) {
         return !isValid(es);
     }
 
@@ -57,12 +56,12 @@ public final class JVal {
         };
     }
 
-    
+
     public static <T, E> Validator<T, E> sequentially(Validator<T, E>... validators) {
         return x -> {
             for (Validator<T, E> v : validators) {
                 List<E> validated = v.apply(x);
-                if (isInvalid(validated)) {
+                if (failed(validated)) {
                     return validated;
                 }
             }
@@ -82,7 +81,7 @@ public final class JVal {
             Stream<List<E>> vs = Arrays.stream(validators)
                 .map(v -> v.apply(x));
 
-            Optional<List<E>> maybeOneValid = vs.filter(JVal::isValid)
+            Optional<List<E>> maybeOneValid = vs.filter(Core::isValid)
                 .findFirst();
 
             if (!maybeOneValid.isPresent()) {
@@ -116,16 +115,13 @@ public final class JVal {
     }
 
     public static <V, T extends List<V>, E> Validator<T, List<E>> list(Validator<V, E> validator) {
-        return xs -> {
-            return xs.stream()
-                .map(x -> validator.apply(x))
-                .collect(Collectors.toList());
-        };
+        return xs -> xs.stream()
+            .map(x -> validator.apply(x))
+            .collect(Collectors.toList());
     }
 
     public static <O, T, E> Validator<O, E> prop(Function<O, T> property, Validator<T, E> validator) {
-        return obj -> {
-            return validator.apply(property.apply(obj));
-        };
+        return obj -> validator.apply(property.apply(obj));
     }
+
 }

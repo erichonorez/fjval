@@ -5,9 +5,9 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import org.h5z.jval.JVal.*;
+import org.h5z.jval.Core.*;
 
-import static org.h5z.jval.JVal.*;
+import static org.h5z.jval.Core.*;
 
 public final class Validators {
 
@@ -47,12 +47,13 @@ public final class Validators {
     public static <T, E> Validator<T, E> cond(Function<T, Boolean> s, Supplier<E> e) {
         return v -> {
             if (!s.apply(v)) {
-                invalid(e.get());
+                return invalid(e.get());
             }
             return valid(v);
         };
     }
 
     // write required and optional
+    // write in
 
 }
