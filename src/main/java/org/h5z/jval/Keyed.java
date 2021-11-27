@@ -43,6 +43,10 @@ public final class Keyed {
         return false;
     }
 
+    public static <K, E> boolean succeed(Map<K, List<E>> validated) {
+        return !failed(validated);
+    }
+
     public static <K, E> boolean failed(Map<K, List<E>> validated, K k) {
         if (!validated.containsKey(k)) {
             return false;
@@ -99,7 +103,7 @@ public final class Keyed {
                     });
     }
 
-    public static <K, V, T extends Map<K, V>, E> KeyedValidator<K, T, E> val(K key, Validator<V, E> validator) {
+    public static <K, V, T extends Map<K, V>, E> KeyedValidator<K, T, E> key(K key, Validator<V, E> validator) {
         return map -> new HashMap<K, List<E>>() {{
             put(key, validator.apply(map.get(key)));
         }};

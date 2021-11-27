@@ -4,8 +4,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collections;
+
+import static  org.h5z.jval.ValidationResult.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.*;
@@ -22,17 +25,7 @@ class ValidationResultUnitTest {
         @Test
         @DisplayName("should create a single validation result")
         public void test() {
-            ValidationResult<List<String>> result = ValidationResult.make(Arrays.asList(
-                "This is an error A",
-                "This is an error B"
-            ));
 
-            Boolean isNode = result.cases(
-                n -> Boolean.TRUE,
-                l -> Boolean.FALSE
-            );
-
-            assertThat(isNode).isTrue();
         }
     }
 
@@ -43,16 +36,25 @@ class ValidationResultUnitTest {
         @Test
         @DisplayName("it should merge two singe validation result")
         public void test() {
-            ValidationResult<List<String>> result = ValidationResult.make(Arrays.asList(
-                "This is an error A",
-                "This is an error B"
-            ));
 
-            ValidationResult<List<String>> appended = append(result, result);
-            assertThat(result.cases(
-                n -> Boolean.TRUE,
-                l -> Boolean.FALSE
-            )).isTrue();
+        }
+
+    }
+
+    @Nested
+    @DisplayName("API")
+    class API {
+
+        @Test
+        @DisplayName("Demo")
+        public void test() {
+            ValidationResult<String> result = root(
+                Collections.emptyList(), // no root errors
+                Arrays.asList(           // only property level errors
+                    leaf("x", Arrays.asList("Should be greater than 1")),
+                    leaf("y", Arrays.asList("Should be greater than 1"))
+                )
+            );
         }
 
     }

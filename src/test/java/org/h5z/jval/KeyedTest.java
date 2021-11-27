@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.h5z.jval.Core.prop;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.h5z.jval.Core.*;
 import static org.h5z.jval.Keyed.*;
 import static org.h5z.jval.Validators.eq;
 import static org.h5z.jval.Validators.gt;
@@ -70,7 +71,6 @@ public class KeyedTest {
         );
 
         Map<String, List<String>> result = householdValidator.apply(household);
-
     }
 
     @Test
@@ -96,8 +96,8 @@ public class KeyedTest {
     @Test
     public void itShouldValidatedAMap() {
         KeyedValidator<String, Map<String, Integer>, String> validator = every(
-            val("x", eq(42, () -> "Should be equal to 42")),
-            val("y", gt(1, () -> "Should be gt thane 1"))
+            key("x", eq(42, () -> "Should be equal to 42")),
+            key("y", gt(1, () -> "Should be gt thane 1"))
         );
 
         HashMap<String, Integer> map = new HashMap<String, Integer>() {{

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import org.h5z.jval.Core.*;
 
@@ -47,13 +48,36 @@ public final class Validators {
     public static <T, E> Validator<T, E> cond(Function<T, Boolean> s, Supplier<E> e) {
         return v -> {
             if (!s.apply(v)) {
-                return invalid(e.get());
+                return fail(e.get());
             }
-            return valid(v);
+            return success(v);
         };
     }
 
-    // write required and optional
+    public static <T, E> Validator<T, E> notNull(Supplier<E> supplier) {
+        return v -> {
+            if (null != v) {
+                return success(v);
+            }
+            return fail(supplier.get());
+        };
+    }
+
+    public static <T extends String, E> Validator<T, E> matches(String regex, Supplier<E> supplier) {
+        return v -> {
+            boolean match = Pattern.compile(regex).matcher(v).find();
+            if (match) {
+                return success(v);
+            }
+            return fail(supplier.get());
+        };
+    }
+
+    // @TODO improve it
+    public static <T extends String, E> Validator<T, E> integer(Supplier<E> supplier) {
+        return matches("\\d+", supplier);
+    }
+
     // write in
 
 }
