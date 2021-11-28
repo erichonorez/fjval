@@ -107,26 +107,11 @@ public final class Core {
     }
 
     /**
-     * 
-     */
-    public static <T, E> Validator<T, E> not(Validator<T, E> v, Supplier<E> s) {
-        return x -> {
-            List<E> validated = v.apply(x);
-            if (isValid(validated)) {
-                return invalid(s.get());
-            }
-            return valid(x);
-        };
-    }
-
-    /**
-     * Creates a validator from other validatos.
+     * <b>Combinator</b> - Creates a validator that will succeed if any on the given validators succeed.
+     * All the validators are executed.
      *
-     * The resulting validator will pass if any of the given validators passes.
-     *
-     * All the validators are evaluated and if all fail the result is the collection of the errors returned by the validators.
+     * @return an empty list if all the validator succeeded. The errors of all failed validator otherwise.
      */
-    // Combinator
     public static <T, E> Validator<T, E> any(Validator<T, E>... validators) {
         return x -> {
             Stream<List<E>> vs = Arrays.stream(validators)
@@ -183,6 +168,19 @@ public final class Core {
                 return valid(v);
             }
             return validator.apply(v);
+        };
+    }
+
+    /**
+     *
+     */
+    public static <T, E> Validator<T, E> not(Validator<T, E> v, Supplier<E> s) {
+        return x -> {
+            List<E> validated = v.apply(x);
+            if (isValid(validated)) {
+                return invalid(s.get());
+            }
+            return valid(x);
         };
     }
 

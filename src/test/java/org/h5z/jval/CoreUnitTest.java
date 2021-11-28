@@ -182,4 +182,29 @@ public class CoreUnitTest {
 
     }
 
+    @DisplayName("any")
+    class Any {
+
+        Validator<String, String> eqA = v -> "a".equals(v) ? valid(v) : invalid("not a");
+        Validator<String, String> eqB = v -> "b".equals(v) ? valid(v) : invalid("not b");
+        Validator<String, String> eqAOrB = any(eqA, eqB);
+
+        @Test
+        @DisplayName("Returns an empty list of all validators succeeded") List<DynamicTest> t0() {
+            return Arrays.asList("a", "b")
+                .stream()
+                .map(v -> dynamicTest(String.format("Value: [%s]", v), () -> assertThat(isValid(eqAOrB.apply(v))).isTrue()))
+                .collect(Collectors.toList());
+        }
+
+        @Test
+        @DisplayName("Returns collected errors of the failed validators") void t1() {
+            assertThat(eqAOrB.apply("c")).containsExactly(
+                "not a",
+                "not b"
+            );
+        }
+
+    }
+
 }
