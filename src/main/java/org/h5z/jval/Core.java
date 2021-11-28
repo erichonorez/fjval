@@ -114,14 +114,15 @@ public final class Core {
      */
     public static <T, E> Validator<T, E> any(Validator<T, E>... validators) {
         return x -> {
-            Stream<List<E>> vs = Arrays.stream(validators)
-                .map(v -> v.apply(x));
+            List<List<E>> vs = Arrays.stream(validators)
+                .map(v -> v.apply(x))
+                .collect(Collectors.toList());
 
-            Optional<List<E>> maybeOneValid = vs.filter(Core::isValid)
+            Optional<List<E>> maybeOneValid = vs.stream().filter(Core::isValid)
                 .findFirst();
 
             if (!maybeOneValid.isPresent()) {
-                List<E> collected = vs.reduce(new ArrayList<>(), (acc, b) -> {
+                List<E> collected = vs.stream().reduce(new ArrayList<>(), (acc, b) -> {
                         acc.addAll(b);
                         return acc;
                     });
@@ -129,6 +130,20 @@ public final class Core {
             }
             return valid(x);
 
+        };
+    }
+
+    /**
+     * Creates a validator that will execute the given validator if the value to validate is not null. Returns the error provided by the given supplier otherwise.
+     *
+     * @return an empty list if the validated value is not null and pass the given validator. The error provided by the supplier otherwise.
+     */
+    public static <T, E> Validator<T, E> required(Validator<T, E> validator, Supplier<E> supplier) {
+        return v -> {
+            if (null != v) {
+                return validator.apply(v);
+            }
+            return invalid(supplier.get());
         };
     }
 
@@ -149,16 +164,6 @@ public final class Core {
 
     public static <O, T, E> Validator<O, E> prop(Function<O, T> property, Validator<T, E> validator) {
         return obj -> validator.apply(property.apply(obj));
-    }
-
-    // Combinator
-    public static <T, E> Validator<T, E> required(Validator<T, E> validator, Supplier<E> supplier) {
-        return v -> {
-            if (null != v) {
-                return validator.apply(v);
-            }
-            return invalid(supplier.get());
-        };
     }
 
     // Combinator

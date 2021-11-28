@@ -182,6 +182,7 @@ public class CoreUnitTest {
 
     }
 
+    @Nested
     @DisplayName("any")
     class Any {
 
@@ -203,6 +204,20 @@ public class CoreUnitTest {
                 "not a",
                 "not b"
             );
+        }
+
+    }
+
+    @Nested
+    @DisplayName("required")
+    class Required {
+
+        Validator<String, String> eqA = v -> "a".equals(v) ? valid(v) : invalid("not a");
+        Validator<String, String> requiredEqA = required(eqA, () -> "required");
+
+        @Test
+        @DisplayName("Returns an empty list if the validated value is not null and pass the given validator") void t0() {
+            assertThat(requiredEqA.apply("a")).satisfies(Core::isValid);
         }
 
     }
