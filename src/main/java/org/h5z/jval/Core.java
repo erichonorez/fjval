@@ -179,7 +179,9 @@ public final class Core {
     }
 
     /**
+     * Creates a validator that will return the negation of the given validator. If the given validator returns a valid result then this validator will return an invalid result with the error provided by the given supplier.
      *
+     * @return an empty list if the given validator fails. A non-empty list containing the error provided by the supplier otherwise.
      */
     public static <T, E> Validator<T, E> not(Validator<T, E> v, Supplier<E> s) {
         return x -> {

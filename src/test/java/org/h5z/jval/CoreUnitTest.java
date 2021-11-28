@@ -324,4 +324,27 @@ public class CoreUnitTest {
 
     }
 
+    @Nested
+    @DisplayName("not")
+    class Not {
+
+        Validator<Integer, String> gt0
+            = v -> v > 0 ? valid(v) : invalid("gt0");
+
+        Validator<Integer, String> lte0 = not(gt0, () -> "Should be less than equal to 0");
+
+        @Test
+        @DisplayName("Returns an empty list if the given validator fails") void t0() {
+            assertThat(lte0.apply(0)).satisfies(Core::isValid);
+        }
+
+        @Test
+        @DisplayName("Returns non-empty list containing the error provided by the supplier") void t1() {
+            assertThat(lte0.apply(1)).containsExactly(
+                "Should be less than equal to 0"
+            );
+        }
+
+    }
+
 }
