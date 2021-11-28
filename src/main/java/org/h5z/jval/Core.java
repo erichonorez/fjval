@@ -92,6 +92,21 @@ public final class Core {
     }
 
     /**
+     * <b>Combinator</b> - Create a validator that will execute all the given validators and collect all the errors in a single list.
+     *
+     * @return an empty list if all the validator succeeded. The errors of all failed validator otherwise.
+     */
+    public static <T, E> Validator<T, E> every(Validator<T, E> ... validators) {
+        return x -> Arrays.stream(validators)
+            .map(v -> v.apply(x))
+            .reduce(new ArrayList<>(),
+                (acc, ls) -> {
+                    acc.addAll(ls);
+                    return acc;
+                });
+    }
+
+    /**
      * 
      */
     public static <T, E> Validator<T, E> not(Validator<T, E> v, Supplier<E> s) {
@@ -130,25 +145,6 @@ public final class Core {
             return valid(x);
 
         };
-    }
-
-    /**
-     * Creates a validator from other validatos. The resulting validator will pass
-     * if all the given validators passes.
-     *
-     * All of the validators are evaluated even if some of the fail.
-     *
-     * The errors returned by each validator are collected and returned.
-     */
-    // Combinator
-    public static <T, E> Validator<T, E> every(Validator<T, E> ... validators) {
-        return x -> Arrays.stream(validators)
-            .map(v -> v.apply(x))
-            .reduce(new ArrayList<>(),
-                    (acc, ls) -> {
-                        acc.addAll(ls);
-                        return acc;
-                    });
     }
 
     /**

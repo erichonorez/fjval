@@ -150,4 +150,36 @@ public class CoreUnitTest {
 
     }
 
+    @Nested
+    @DisplayName("every")
+    class Every {
+
+        Validator<Integer, String> gt0
+            = v -> v > 0 ? valid(v) : invalid("gt0");
+        Validator<Integer, String> gt5
+            = v -> v > 5 ? valid(v) : invalid("gt5");
+        Validator<Integer, String> gt0And5 = every(gt0, gt5);
+
+        @Test
+        @DisplayName("Returns an empty list of all validators succeeded") void t0() {
+            assertThat(isValid(gt0And5.apply(6))).isTrue();
+        }
+
+        @Test
+        @DisplayName("Returns collected errors of the failed validators") void t1() {
+            assertThat(gt0And5.apply(0)).containsExactly(
+                "gt0",
+                "gt5"
+            );
+        }
+
+        @Test
+        @DisplayName("Executes all validators") void t2() {
+            assertThat(gt0And5.apply(2)).containsExactly(
+                "gt5"
+            );
+        }
+
+    }
+
 }
