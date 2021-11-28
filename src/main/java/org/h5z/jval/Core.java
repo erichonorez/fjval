@@ -169,8 +169,13 @@ public final class Core {
             .collect(Collectors.toList());
     }
 
-    public static <O, T, E> Validator<O, E> prop(Function<O, T> property, Validator<T, E> validator) {
-        return obj -> validator.apply(property.apply(obj));
+    /**
+     * Creates a validator that will first get the value to validate by calling the given fn and then pass it to the given validator.
+     *
+     * @return an empty list if the given validator succeeded. The errors return by the given validator otherwise.
+     */
+    public static <O, T, E> Validator<O, E> prop(Function<O, T> fn, Validator<T, E> validator) {
+        return obj -> validator.apply(fn.apply(obj));
     }
 
     /**

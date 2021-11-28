@@ -292,4 +292,36 @@ public class CoreUnitTest {
 
     }
 
+    @Nested
+    @DisplayName("prop")
+    class Prop {
+
+        Validator<Integer, String> gt0
+            = v -> v > 0 ? valid(v) : invalid("gt0");
+
+        class Coord {
+            private final int x;
+            Coord(int x) {
+                this.x = x;
+            }
+
+            public int getX() {
+                return x;
+            }
+        }
+
+        @Test
+        @DisplayName("Returns an empty list if the given validator succeeded") void t0() {
+            assertThat(prop(Coord::getX, gt0).apply(new Coord(1)))
+                .satisfies(Core::isValid);
+        }
+
+        @Test
+        @DisplayName("Returns the errors return by the given validator otherwise") void t1() {
+            assertThat(prop(Coord::getX, gt0).apply(new Coord(-1)))
+                .containsExactly("gt0");
+        }
+
+    }
+
 }
