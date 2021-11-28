@@ -220,6 +220,24 @@ public class CoreUnitTest {
             assertThat(requiredEqA.apply("a")).satisfies(Core::isValid);
         }
 
+        @Test
+        @DisplayName("Returns the errors of the given validator if the value is not null but is not valid") void t1() {
+            List<String> result = requiredEqA.apply("b");
+            assertAll(
+                () -> assertThat(result).satisfies(Core::isInvalid),
+                () -> assertThat(result).containsExactly("not a")
+            );
+        }
+
+        @Test
+        @DisplayName("Returns the error provided by the given supplier if the validated value is null") void t2() {
+            List<String> result = requiredEqA.apply(null);
+            assertAll(
+                () -> assertThat(result).satisfies(Core::isInvalid),
+                () -> assertThat(result).containsExactly("required")
+            );
+        }
+
     }
 
 }

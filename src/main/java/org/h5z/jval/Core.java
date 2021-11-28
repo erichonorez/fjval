@@ -134,9 +134,9 @@ public final class Core {
     }
 
     /**
-     * Creates a validator that will execute the given validator if the value to validate is not null. Returns the error provided by the given supplier otherwise.
+     * Creates a validator that will execute the given validator if the value to validate is not null. Returns the error provided by the given supplier if the validated value is <code>null</code>.
      *
-     * @return an empty list if the validated value is not null and pass the given validator. The error provided by the supplier otherwise.
+     * @return an empty list if the validated value is not null and pass the given validator. Returns the error provided by the given supplier if the validated value is <code>null</code>. Returns the errors of the given validator if the value is not <code>null</code> but is not valid.
      */
     public static <T, E> Validator<T, E> required(Validator<T, E> validator, Supplier<E> supplier) {
         return v -> {
