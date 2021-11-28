@@ -240,4 +240,56 @@ public class CoreUnitTest {
 
     }
 
+    @Nested
+    @DisplayName("optional")
+    class Optional {
+
+        Validator<String, String> eqA = v -> "a".equals(v) ? valid(v) : invalid("not a");
+        Validator<String, String> optionalEqA = optional(eqA);
+
+        @Test
+        @DisplayName("Returns an empty list if the validated value is null") void t0() {
+            assertThat(optionalEqA.apply(null)).satisfies(Core::isValid);
+        }
+
+        @Test
+        @DisplayName("Returns an empty list if the validated value is valid") void t1() {
+            assertThat(optionalEqA.apply("a")).satisfies(Core::isValid);
+        }
+
+        @Test
+        @DisplayName("Returns the errors of the given validator if the value is not null but is not valid") void t2() {
+            List<String> result = optionalEqA.apply("b");
+            assertAll(
+                () -> assertThat(result).satisfies(Core::isInvalid),
+                () -> assertThat(result).containsExactly("not a")
+            );
+        }
+
+    }
+
+    @Nested
+    @DisplayName("list")
+    class CoreList {
+
+        Validator<String, String> eqA =
+            v -> "a".equals(v) ? valid(v) : invalid("not a");
+        Validator<List<String>, String> listOfA = list(eqA);
+
+        @Test
+        @DisplayName("Returns a empty list if all the elements of the validated list pass the given validator") void t0() {
+            assertThat(listOfA.apply(Arrays.asList("a", "a"))).satisfies(Core::isValid);
+        }
+
+        @Test
+        @DisplayName("Returns the flattened collected errors") void t1() {
+            List<String> result = listOfA.apply(Arrays.asList("b", "c"));
+            assertThat(result).containsExactly(
+                "not a",
+                "not a"
+            );
+        }
+
+    }
+
 }

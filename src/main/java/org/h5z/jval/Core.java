@@ -1,10 +1,6 @@
 package org.h5z.jval;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -148,25 +144,10 @@ public final class Core {
     }
 
     /**
-     * Apply the validator to a list of elements
+     * Creates a validator that will execute the given validator if the value to validate is not null. Returns a valid result if the validated value is <code>null</code>.
      *
-     * @param validator
-     * @param <V>
-     * @param <T>
-     * @param <E>
-     * @return
+     * @return an empty list if the validated value is null or pass the given validator. Returns the errors of the given validator if the value is not <code>null</code> but is not valid.
      */
-    public static <V, T extends List<V>, E> Validator<T, List<E>> list(Validator<V, E> validator) {
-        return xs -> xs.stream()
-            .map(x -> validator.apply(x))
-            .collect(Collectors.toList());
-    }
-
-    public static <O, T, E> Validator<O, E> prop(Function<O, T> property, Validator<T, E> validator) {
-        return obj -> validator.apply(property.apply(obj));
-    }
-
-    // Combinator
     public static <T, E> Validator<T, E> optional(Validator<T, E> validator) {
         return v -> {
             if (null == v) {
@@ -174,6 +155,22 @@ public final class Core {
             }
             return validator.apply(v);
         };
+    }
+
+    /**
+     * Creates a validator that will execute the given validator on all elements of a list. Returns an empty list if all the elements of the validated list pass the given validator.
+     *
+     * @return Returns a empty list if all the elements of the validated list pass the given validator. Returns the flattened collected errors otherwise.
+     */
+    public static <V, T extends List<V>, E> Validator<T, E> list(Validator<V, E> validator) {
+        return xs -> xs.stream()
+            .map(x -> validator.apply(x))
+            .flatMap(Collection::stream)
+            .collect(Collectors.toList());
+    }
+
+    public static <O, T, E> Validator<O, E> prop(Function<O, T> property, Validator<T, E> validator) {
+        return obj -> validator.apply(property.apply(obj));
     }
 
     /**
