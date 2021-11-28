@@ -13,7 +13,7 @@ public final class Vavr {
     public static <T, E> Function<T, Validation<List<E>, T>> monadic(Core.Validator<T, E> validator) {
         return v -> {
             List<E> result = validator.apply(v);
-            if (Core.succeed(result)) {
+            if (Core.isValid(result)) {
                 return Validation.valid(v);
             }
             return Validation.invalid(result);

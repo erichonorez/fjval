@@ -14,10 +14,10 @@ public final class FunctionalJava {
     public static <T, E> Function<T, Validation<List<E>, T>> monadic(Core.Validator<T, E> validator) {
         return t -> {
             List<E> result = validator.apply(t);
-            if (!Core.succeed(result)) {
-                return Validation.fail(result);
+            if (Core.isValid(result)) {
+                return Validation.success(t);
             }
-            return Validation.success(t);
+            return Validation.fail(result);
         };
     }
 }

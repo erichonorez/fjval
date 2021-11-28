@@ -48,18 +48,18 @@ public final class Validators {
     public static <T, E> Validator<T, E> cond(Function<T, Boolean> s, Supplier<E> e) {
         return v -> {
             if (!s.apply(v)) {
-                return fail(e.get());
+                return invalid(e.get());
             }
-            return success(v);
+            return valid(v);
         };
     }
 
     public static <T, E> Validator<T, E> notNull(Supplier<E> supplier) {
         return v -> {
             if (null != v) {
-                return success(v);
+                return valid(v);
             }
-            return fail(supplier.get());
+            return invalid(supplier.get());
         };
     }
 
@@ -67,9 +67,9 @@ public final class Validators {
         return v -> {
             boolean match = Pattern.compile(regex).matcher(v).find();
             if (match) {
-                return success(v);
+                return valid(v);
             }
-            return fail(supplier.get());
+            return invalid(supplier.get());
         };
     }
 

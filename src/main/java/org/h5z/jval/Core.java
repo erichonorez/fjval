@@ -1,7 +1,5 @@
 package org.h5z.jval;
 
-import fj.data.Validation;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,9 +16,12 @@ public final class Core {
     private Core() {}
 
     /**
-     * A validator is simply a function take a value and returning a list of errors.
-     * If the resulting list contains at least one element the validator failed to validate the value.
-     * Otherwise the value passed the validator and is valid.
+     * A validator is a function accepting a value of type `T` and returning a list of errors of type `E`.
+     *
+     * If the validated value is invalid then the validator returns a non-empty list of errors.
+     * Otherwise it returns an empty list.
+     *
+     * The validator must be a total function. It must return a value for any possible value of `T` and `null`.
      */
     @FunctionalInterface
     public interface Validator<T, E> extends Function<T, List<E>> {
@@ -35,45 +36,71 @@ public final class Core {
 
     }
 
-    public static <E> boolean succeed(List<E> es) {
-        return es.isEmpty();
+    /**
+     * Creates a valid validation result for the given value.
+     *
+     * @return an empty list.
+     */
+    public static <T, E> List<E> valid(T v) {
+        return new ArrayList<>();
     }
 
-    public static <E> boolean failed(List<E> es) {
-        return !succeed(es);
-    }
-
-    public static <E> List<E> fail(E e) {
+    /**
+     * Creates an invalid validation result with the given error.
+     *
+     * @return a list with the given error.
+     */
+    public static <E> List<E> invalid(E e) {
         ArrayList<E> result = new ArrayList<>();
         result.add(e);
         return result;
     }
 
-    public static <T, E> List<E> success(T v) {
-        return new ArrayList<>();
+    /**
+     * Checks if the validation result is valid.
+     *
+     * @return <code>true</code> if the given list is empty and not <code>null</null>. It returns <code>false</false> otherwise.
+     */
+    public static <E> boolean isValid(List<E> es) {
+        return null != es && es.isEmpty();
     }
 
-    // Combinator
-    public static <T, E> Validator<T, E> not(Validator<T, E> v, Supplier<E> s) {
-        return x -> {
-            List<E> validated = v.apply(x);
-            if (succeed(validated)) {
-                return fail(s.get());
-            }
-            return success(x);
-        };
+    /**
+     * Checks if the validation result is invalid.
+     *
+     * @return <code>true</code> if the given list is not empty and not <code>null</null>. It returns <code>false</code> otherwise.
+     */
+    public static <E> boolean isInvalid(List<E> es) {
+        return null != es && !isValid(es);
     }
 
-    // Combinator
+    /**
+     * <b>Combinator</b> - Create a validator that will execute sequentially the given validators and return the errors of the first failed validator. The execution of the validators stops at the first failed validators (fail-fast).
+     *
+     * @return an empty list if all the validator succeeded. The errors of the first failed validator otherwise.
+     */
     public static <T, E> Validator<T, E> sequentially(Validator<T, E>... validators) {
         return x -> {
             for (Validator<T, E> v : validators) {
                 List<E> validated = v.apply(x);
-                if (failed(validated)) {
+                if (isInvalid(validated)) {
                     return validated;
                 }
             }
             return Collections.emptyList();
+        };
+    }
+
+    /**
+     * 
+     */
+    public static <T, E> Validator<T, E> not(Validator<T, E> v, Supplier<E> s) {
+        return x -> {
+            List<E> validated = v.apply(x);
+            if (isValid(validated)) {
+                return invalid(s.get());
+            }
+            return valid(x);
         };
     }
 
@@ -90,7 +117,7 @@ public final class Core {
             Stream<List<E>> vs = Arrays.stream(validators)
                 .map(v -> v.apply(x));
 
-            Optional<List<E>> maybeOneValid = vs.filter(Core::succeed)
+            Optional<List<E>> maybeOneValid = vs.filter(Core::isValid)
                 .findFirst();
 
             if (!maybeOneValid.isPresent()) {
@@ -100,7 +127,7 @@ public final class Core {
                     });
                 return collected;
             }
-            return success(x);
+            return valid(x);
 
         };
     }
@@ -149,7 +176,7 @@ public final class Core {
             if (null != v) {
                 return validator.apply(v);
             }
-            return fail(supplier.get());
+            return invalid(supplier.get());
         };
     }
 
@@ -157,7 +184,7 @@ public final class Core {
     public static <T, E> Validator<T, E> optional(Validator<T, E> validator) {
         return v -> {
             if (null == v) {
-                return success(v);
+                return valid(v);
             }
             return validator.apply(v);
         };

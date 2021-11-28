@@ -1,122 +1,153 @@
 package org.h5z.jval;
 
-import org.h5z.jval.Core.Validator;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.h5z.jval.Core.*;
-import static org.h5z.jval.Validators.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.DynamicTest.dynamicTest;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
+import org.junit.jupiter.api.*;
 
 public class CoreUnitTest {
 
-    @Test
-    public void anonymous() {
-        Validator<Coord, String> xGtY = c -> {
-            if (c.x <= c.y) {
-                return Core.fail("Error");
-            }
-            return success(c);
-        };
-    }
+    @Nested
+    @DisplayName("valid")
+    class Valid {
 
-    @Test
-    public void not_shouldReturnTheNegation() {
-        Validator<Integer, String> one = eq(1, () -> "shoult eq to 1");
-        Validator<Integer, String> notOne = not(one, () -> "should not be 1");
-        assertTrue(failed(notOne.apply(1)));
-    }
+        @Test
+        @DisplayName("Returns an empty list for a given value") void t0() {
+            List<?> result = valid("this string is valid");
+            assertThat(result).isEmpty();
+        }
 
-    @Test
-    public void prop1() {
-        Validator<Coord, String> prop = prop(Coord::x, gt(2, () -> "X should be greater than 2"));
-        assertFalse(succeed(prop.apply(new Coord(1, 0))));
-
-    }
-
-    @Test
-    public void prop2() {
-        Validator<Coord, String> prop = every(
-            prop(Coord::x, gt(2, () -> "X should be greater than 2")),
-            prop(Coord::y, eq(0, () -> "Y should be equal to 0")),
-            cond((c) -> c.x > c.y, () -> "X should be greater than Y"));
-
-        assertFalse(succeed(prop.apply(new Coord(1, 0))));
+        @Test
+        @DisplayName("Returns an empty list even when the given value is null") void t1() {
+            List<?> result = valid(null);
+            assertThat(result).isEmpty();
+        }
 
     }
 
     @Nested
-    @DisplayName("Required")
-    class Required {
+    @DisplayName("invalid")
+    class Invalid {
 
         @Test
-        @DisplayName("Should fail if the value is null")
-        public void test() {
-            Validator<Integer, String> validator = required(
-                gt(1, () -> "Should be greater than 1"),
-                () -> "Required"
-            );
-            List<String> result = validator.apply(null);
-
+        @DisplayName("Returns a list with the given error") void t0() {
+            List<String> result = invalid("This is an error");
             assertAll(
-                () -> assertThat(failed(result)).isTrue(),
-                () -> assertThat(result.size()).isEqualTo(1),
-                () -> assertThat(result.get(0)).isEqualTo("Required")
+                      () -> assertThat(result).hasSize(1),
+                      () -> assertThat(result).contains("This is an error")
             );
         }
+
+        @Test
+        @DisplayName("Returns a list with an null value if the error is null") void t1() {
+            List<?> result = invalid(null);
+            assertAll(
+                      () -> assertThat(result).hasSize(1),
+                      () -> assertThat(result.get(0)).isNull()
+            );
+
+        }
+
+        @Nested
+        class WithErrorHierarchy {
+
+            @Test
+            @DisplayName("Returns a list with a child class error") void t0() {
+                SpecificError e = new SpecificError();
+                List<Error> result = invalid(e);
+                assertThat(result).containsExactly(e);
+            }
+
+            private abstract class Error { }
+            private class SpecificError extends Error { }
+
+        }
+
     }
 
     @Nested
-    @DisplayName("Optional")
-    class Optional {
+    @DisplayName("isValid")
+    class IsValid {
 
         @Test
-        @DisplayName("Should pass if the valud is null")
-        public void test() {
-            Validator<Integer, String> optional = optional(
-                gt(1, () -> "Should be greater than 1")
-            );
-
-            List<String> result = optional.validate(null);
-
-            assertThat(failed(result)).isFalse();
+        @DisplayName("Returns true if the given list is empty") void t0() {
+            assertThat(isValid(valid("A valid value"))).isTrue();
         }
 
         @Test
-        @DisplayName("Should execute other validator if value is not null")
-        public void test2() {
-            Validator<Integer, String> optional = optional(
-                gt(1, () -> "Should be greater than 1")
-            );
+        @DisplayName("Returns false if the given value is null") void t1() {
+            assertThat(isValid(null)).isFalse();
+        }
 
-            List<String> result = optional.apply(0);
-
-            assertThat(failed(result)).isTrue();
+        @Test
+        @DisplayName("Returns false if the given list is not empty") void t2() {
+            assertThat(isValid(invalid("An error"))).isFalse();
         }
 
     }
 
-    private static class Coord {
-        public final int x;
-        public final int y;
+    @Nested
+    @DisplayName("isInvalid")
+    class IsInvalid {
 
-        public Coord(int x, int y) {
-            this.x = x;
-            this.y = y;
+        @Test
+        @DisplayName("Returns true if the given list is not empty") void t0() {
+            assertThat(isInvalid(invalid("This is an error"))).isTrue();
         }
 
-        public int x() {
-            return this.x;
+        @Test
+        @DisplayName("Returns false if the given list is null") void t1() {
+            assertThat(isInvalid(null)).isFalse();
         }
 
-        public int y() {
-            return this.y;
+        @Test
+        @DisplayName("Returns false if the given list is empty") void t2() {
+            assertThat(isInvalid(valid("A valid value"))).isFalse();
         }
+
     }
+
+    @Nested
+    @DisplayName("sequentially")
+    class Sequentially {
+
+        Validator<Integer, String> gt0
+            = v -> v > 0 ? valid(v) : invalid("Should be greater than 0");
+        Validator<Integer, String> lt10
+            = v -> v < 10 ? valid(v) : invalid("Should be lower than 10");
+        Validator<Integer, String> between1And9 = sequentially(gt0, lt10);
+
+        @TestFactory
+        @DisplayName("Returns an empty list if all validators succeeded") List<DynamicTest> t0() {
+            return IntStream.range(1, 10)
+                .mapToObj(i -> dynamicTest(String.format("Value [%d]", i), () -> {
+                            List<String> result = between1And9.apply(i);
+                            assertThat(isValid(result)).isTrue();
+                        }))
+                .collect(Collectors.toList());
+        }
+
+        @TestFactory
+        @DisplayName("Returns an the error of the first failed validator") List<DynamicTest> t1() {
+            return Arrays.asList(
+                dynamicTest("First validator should fail with [0]", () -> {
+                    List<String> result = between1And9.apply(0);
+                    assertThat(result).contains("Should be greater than 0");
+                }),
+                dynamicTest("Second validator should fail with [10]", () -> {
+                    List<String> result = between1And9.apply(10);
+                    assertThat(result).contains("Should be lower than 10");
+                })
+            );
+        }
+
+    }
+
 }

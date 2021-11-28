@@ -36,7 +36,7 @@ public final class Keyed {
     public static <K, E> boolean failed(Map<K, List<E>> validated) {
         for (K key : validated.keySet()) {
             List<E> es = validated.get(key);
-            if (Core.failed(es)) {
+            if (Core.isInvalid(es)) {
                 return true;
             }
         }
@@ -52,20 +52,20 @@ public final class Keyed {
             return false;
         }
 
-        return Core.failed(validated.get(k));
+        return Core.isInvalid(validated.get(k));
     }
 
     public static <K, E> Map<K, List<E>> failures(Map<K, List<E>> validated) {
         return validated.entrySet()
             .stream()
-            .filter(e -> Core.failed(e.getValue()))
+            .filter(e -> Core.isInvalid(e.getValue()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     public static <K, E> List<E> failures(Map<K, List<E>> validated, K k) {
         return validated.entrySet()
             .stream()
-            .filter(e -> k.equals(e.getKey()) && Core.failed(e.getValue()))
+            .filter(e -> k.equals(e.getKey()) && Core.isInvalid(e.getValue()))
             .map(Map.Entry::getValue)
             .reduce(new ArrayList<>(), (acc, b) -> {
                 acc.addAll(b);
