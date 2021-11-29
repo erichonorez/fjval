@@ -239,7 +239,7 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns an empty list if the validated value is not null and pass the given validator")
         void t0() {
-            assertThat(requiredEqA.apply("a")).satisfies(Core::isValid);
+            assertThat(requiredEqA.apply("a")).matches(Core::isValid);
         }
 
         @Test
@@ -247,7 +247,7 @@ public class CoreUnitTest {
         void t1() {
             List<String> result = requiredEqA.apply("b");
             assertAll(
-                () -> assertThat(result).satisfies(Core::isInvalid),
+                () -> assertThat(result).matches(Core::isInvalid),
                 () -> assertThat(result).containsExactly("not a")
             );
         }
@@ -257,7 +257,7 @@ public class CoreUnitTest {
         void t2() {
             List<String> result = requiredEqA.apply(null);
             assertAll(
-                () -> assertThat(result).satisfies(Core::isInvalid),
+                () -> assertThat(result).matches(Core::isInvalid),
                 () -> assertThat(result).containsExactly("required")
             );
         }
@@ -274,13 +274,13 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns an empty list if the validated value is null")
         void t0() {
-            assertThat(optionalEqA.apply(null)).satisfies(Core::isValid);
+            assertThat(optionalEqA.apply(null)).matches(Core::isValid);
         }
 
         @Test
         @DisplayName("Returns an empty list if the validated value is valid")
         void t1() {
-            assertThat(optionalEqA.apply("a")).satisfies(Core::isValid);
+            assertThat(optionalEqA.apply("a")).matches(Core::isValid);
         }
 
         @Test
@@ -288,7 +288,7 @@ public class CoreUnitTest {
         void t2() {
             List<String> result = optionalEqA.apply("b");
             assertAll(
-                () -> assertThat(result).satisfies(Core::isInvalid),
+                () -> assertThat(result).matches(Core::isInvalid),
                 () -> assertThat(result).containsExactly("not a")
             );
         }
@@ -306,7 +306,7 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns a empty list if all the elements of the validated list pass the given validator")
         void t0() {
-            assertThat(listOfA.apply(Arrays.asList("a", "a"))).satisfies(Core::isValid);
+            assertThat(listOfA.apply(Arrays.asList("a", "a"))).matches(Core::isValid);
         }
 
         @Test
@@ -332,7 +332,7 @@ public class CoreUnitTest {
         @DisplayName("Returns an empty list if the given validator succeeded")
         void t0() {
             assertThat(prop(Coord::getX, gt0).apply(new Coord(1)))
-                .satisfies(Core::isValid);
+                .matches(Core::isValid);
         }
 
         @Test
@@ -368,7 +368,7 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns an empty list if the given validator fails")
         void t0() {
-            assertThat(lte0.apply(0)).satisfies(Core::isValid);
+            assertThat(lte0.apply(0)).matches(Core::isValid);
         }
 
         @Test
