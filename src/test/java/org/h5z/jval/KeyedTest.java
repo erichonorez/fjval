@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.h5z.jval.Core.*;
 import static org.h5z.jval.Keyed.*;
 import static org.h5z.jval.Validators.eq;
