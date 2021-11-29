@@ -14,6 +14,29 @@ public final class Core {
     }
 
     /**
+     * A validator is a function accepting a value of type `T` and returning a list of errors of type `E`.
+     * <p>
+     * If the validated value is invalid then the validator returns a non-empty list of errors. Otherwise it returns an
+     * empty list.
+     * <p>
+     * The validator must be a total function. It must return a value for any possible value of `T` and `null`.
+     */
+    @FunctionalInterface
+    public interface Validator<T, E> extends Function<T, List<E>> {
+
+        @Override
+        List<E> apply(T t);
+
+        /**
+         * Alias for {@link Validator#apply(Object)}
+         */
+        default List<E> validate(T t) {
+            return this.apply(t);
+        }
+
+    }
+
+    /**
      * Creates a valid validation result for the given value.
      *
      * @return an empty list.
@@ -186,29 +209,6 @@ public final class Core {
             }
             return valid(x);
         };
-    }
-
-    /**
-     * A validator is a function accepting a value of type `T` and returning a list of errors of type `E`.
-     * <p>
-     * If the validated value is invalid then the validator returns a non-empty list of errors. Otherwise it returns an
-     * empty list.
-     * <p>
-     * The validator must be a total function. It must return a value for any possible value of `T` and `null`.
-     */
-    @FunctionalInterface
-    public interface Validator<T, E> extends Function<T, List<E>> {
-
-        @Override
-        List<E> apply(T t);
-
-        /**
-         * Alias for {@link Validator#apply(Object)}
-         */
-        default List<E> validate(T t) {
-            return this.apply(t);
-        }
-
     }
 
 }
