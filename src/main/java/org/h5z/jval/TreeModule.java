@@ -1,16 +1,22 @@
 package org.h5z.jval;
 
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Stream;
+import static org.organicdesign.fp.StaticImports.xform;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.organicdesign.fp.collections.ImList;
+import org.organicdesign.fp.collections.ImMap;
+import org.organicdesign.fp.oneOf.Option;
 
 public final class TreeModule {
 
     public static class Trie<E> {
-        private final List<E> errors;
-        private final Map<String, Trie<E>> children;
+        private final ImList<E> errors;
+        private final ImMap<String, Trie<E>> children;
 
-        public Trie(List<E> errors, Map<String, Trie<E>> children) {
+        public Trie(ImList<E> errors, ImMap<String, Trie<E>> children) {
             this.errors = errors;
             this.children = children;
         }
@@ -25,12 +31,15 @@ public final class TreeModule {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof Trie)) return false;
+            if (this == o)
+                return true;
+            if (!(o instanceof Trie))
+                return false;
 
             Trie<?> trie = (Trie<?>) o;
 
-            if (!getErrors().equals(trie.getErrors())) return false;
+            if (!getErrors().equals(trie.getErrors()))
+                return false;
             return getChildren().equals(trie.getChildren());
         }
 
@@ -42,21 +51,22 @@ public final class TreeModule {
         }
     }
 
-    public static <E> Trie<E> trie(List<E> errors, Map<String, Trie<E>> children) {
+    public static <E> Trie<E> trie(ImList<E> errors, ImMap<String, Trie<E>> children) {
         return new Trie<>(errors, children);
     }
 
     /**
      * Tests if a given trie is valid.
      * 
-     * @return <code>true</code> if the trie root node has no error and all of its children are valid. <code>false</code> otherwise.
+     * @return <code>true</code> if the trie root node has no error and all of its
+     *         children are valid. <code>false</code> otherwise.
      */
     public static <K, E> boolean isValid(Trie<E> trie) {
         return trie.getErrors().isEmpty() &&
-            trie.getChildren().entrySet()
-                .stream()
-                .map(kv -> isValid(kv.getValue()))
-                .reduce(true, (a, b) -> a && b);
+                trie.getChildren().entrySet()
+                        .stream()
+                        .map(kv -> isValid(kv.getValue()))
+                        .reduce(true, (a, b) -> a && b);
     }
 
     public static <K, E> boolean isValid(Path path, Trie<E> trie) {
@@ -66,7 +76,8 @@ public final class TreeModule {
     /**
      * Test if a given trie is invalid.
      * 
-     * @return <code>true</code> if the trie root node has an error or if one of its children is invalid. <code>false</code> otherwise.
+     * @return <code>true</code> if the trie root node has an error or if one of its
+     *         children is invalid. <code>false</code> otherwise.
      */
     public static <E> boolean isInvalid(Trie<E> trie) {
         return !isValid(trie);
@@ -76,7 +87,7 @@ public final class TreeModule {
         return !isValid(path, root);
     }
 
-    public static<E> boolean hasErrors(Trie<E> root) {
+    public static <E> boolean hasErrors(Trie<E> root) {
         return root.getErrors().isEmpty();
     }
 
@@ -96,15 +107,15 @@ public final class TreeModule {
         }
 
         root.getChildren()
-            .forEach((k, v) -> {
-                String key = "".equals(prefix) ? k : prefix + "." + k;
-                acc.put(key, v.getErrors());
-                recurToMap(v, key, acc);
-            });
+                .forEach((k, v) -> {
+                    String key = "".equals(prefix) ? k : prefix + "." + k;
+                    acc.put(key, v.getErrors());
+                    recurToMap(v, key, acc);
+                });
 
         return acc;
     }
- 
+
     /**
      * @TODO implement a safer get returning Option<Trie<E>>
      */
@@ -112,7 +123,7 @@ public final class TreeModule {
         String current = path.current();
         Path next = path.next();
         if ("/".equals(current)
-            && next.isNil()) {
+                && next.isNil()) {
             return root;
         }
 
@@ -127,28 +138,55 @@ public final class TreeModule {
         return get(next, root.getChildren().get(current));
     }
 
-    public static <E> Trie<E> append(Trie<E> a, Trie<E> b) {
-        ArrayList<E> mergedErrors = new ArrayList<>(a.errors);
-        mergedErrors.addAll(b.errors);
-        Map<String, Trie<E>> mergedChildren = new HashMap<>();
+    /**
+     * Returns maybe the node at given key in the given trie if it exists.
+     * 
+     * @param path the sequence of keys to access the node.
+     * @return {@link Option.Some} containing the node with specified key in the
+     *         given trie. {@link Option.none} otherwise.
+     */
+    public static <E> Option<Trie<E>> get(List<String> path, Trie<E> root) {
+        ImList<String> pathImList = xform(path).toImList();
+        String current = pathImList.head().getOrElse("");
+        ImList<String> tail = pathImList.drop(1).toImList();
+
+        return recurGet(current, tail, root);
+    }
+
+    private static <E> Option<Trie<E>> recurGet(String head, ImList<String> tail, Trie<E> root) {
+        if ("".equals(head)) {
+            return Option.some(root);
+        }
+
+        if (!root.getChildren().containsKey(head)) {
+            return Option.none();
+        }
+        
+        Trie<E> child = root.getChildren().get(head);
+        String next = tail.head().getOrElse("");
+        return recurGet(next, tail.drop(1).toImList(), child);
+    }
+
+    /*public static <E> Trie<E> append(Trie<E> a, Trie<E> b) {
+        ImList<E> mergedErrors = a.errors.concat(b.errors);
 
         if (a.getChildren().isEmpty()
-            && b.getChildren().isEmpty()) {
-            return new Trie<>(mergedErrors, mergedChildren);
+                && b.getChildren().isEmpty()) {
+            return new Trie<>(mergedErrors, map());
         }
 
         Set<String> intersection = new HashSet<>(a.getChildren().keySet());
         intersection.retainAll(b.getChildren().keySet());
 
         Stream<String> notInB = a.getChildren()
-            .keySet()
-            .stream()
-            .filter(k -> !intersection.contains(k));
+                .keySet()
+                .stream()
+                .filter(k -> !intersection.contains(k));
 
         Stream<String> notInA = b.getChildren()
-            .keySet()
-            .stream()
-            .filter(k -> !intersection.contains(k));
+                .keySet()
+                .stream()
+                .filter(k -> !intersection.contains(k));
 
         notInB.forEach(k -> mergedChildren.put(k, a.getChildren().get(k)));
         notInA.forEach(k -> mergedChildren.put(k, b.getChildren().get(k)));
@@ -156,12 +194,10 @@ public final class TreeModule {
         intersection.forEach(k -> mergedChildren.put(
                 k,
                 append(
-                    a.getChildren().get(k),
-                    b.getChildren().get(k)
-                ))
-        );
+                        a.getChildren().get(k),
+                        b.getChildren().get(k))));
 
         return new Trie<>(mergedErrors, mergedChildren);
-    }
+    }*/
 
 }
