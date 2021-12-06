@@ -71,8 +71,11 @@ public final class TreeModule {
                         .reduce(true, (a, b) -> a && b);
     }
 
-    public static <K, E> boolean isValid(Path path, Trie<E> trie) {
-        return isValid(get(path, trie));
+    public static <K, E> boolean isValid(List<String> path, Trie<E> trie) {
+        return get(path, trie)
+            .match(
+                el -> isValid(el), 
+                () -> false);
     }
 
     /**
@@ -85,7 +88,7 @@ public final class TreeModule {
         return !isValid(trie);
     }
 
-    public static <E> boolean isInvalid(Path path, Trie<E> root) {
+    public static <E> boolean isInvalid(List<String> path, Trie<E> root) {
         return !isValid(path, root);
     }
 
@@ -93,30 +96,11 @@ public final class TreeModule {
         return root.getErrors().isEmpty();
     }
 
-    public static <E> boolean hasErrors(Path path, Trie<E> root) {
-        return get(path, root).getErrors().isEmpty();
-    }
-
-    /**
-     * @TODO implement a safer get returning Option<Trie<E>>
-     */
-    public static <E> Trie<E> get(Path path, Trie<E> root) {
-        String current = path.current();
-        Path next = path.next();
-        if ("/".equals(current)
-                && next.isNil()) {
-            return root;
-        }
-
-        if (!root.getChildren().containsKey(current)) {
-            return null;
-        }
-
-        if (next.isNil()) {
-            return root.getChildren().get(current);
-        }
-
-        return get(next, root.getChildren().get(current));
+    public static <E> boolean hasErrors(List<String> path, Trie<E> root) {
+        return get(path, root)
+            .match(
+                el -> el.getErrors().isEmpty(),
+                () -> false);
     }
 
     /**
