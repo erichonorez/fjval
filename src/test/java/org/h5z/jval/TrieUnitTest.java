@@ -1,11 +1,13 @@
 package org.h5z.jval;
 
 import org.assertj.core.util.Maps;
+import org.h5z.jval.TreeModule.Trie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import static org.organicdesign.fp.StaticImports.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.h5z.jval.TreeModule.*;
@@ -17,36 +19,44 @@ public class TrieUnitTest {
 
     @Nested
     @DisplayName("isValid")
-    class IsValid{
+    class IsValid {
 
         @Test
-        @DisplayName("Returns true if tree has no error and all of its children are valid") void t0() {
-            Trie<String> validation = tree(
-                NO_ERROR,
-                Maps.newHashMap(
-                    "x",
-                    tree(
-                        NO_ERROR,
-                        NO_CHILD
-                    )
-                ));
+        @DisplayName("Returns true if the trie root node has no error and all of its children are valid")
+        void t0() {
+            Trie<String> validation = trie(
+                    vec(), // no error at the root
+                    map(tup("x", trie(
+                            vec(), // no error for "x"
+                            map())))); // no child
 
             assertThat(isValid(validation)).isTrue();
         }
 
         @Test
-        @DisplayName("Returns false if tree has an error and all of its children are valid") void t1() {
-            Trie<String> validation = tree(
-                Arrays.asList("This is an error"),
-                Maps.newHashMap(
-                    "x",
-                    tree(
-                        NO_ERROR,
-                        NO_CHILD
-                    )
-                ));
+        @DisplayName("Returns false if the root node has an error and all of its children are valid")
+        void t1() {
+            Trie<String> validation = trie(
+                    vec("this is an error"), // an error at the root
+                    map(tup("x", trie(
+                            vec(), // no error for x
+                            map())))); // no child
 
-            assertThat(isInvalid(validation)).isTrue();
+            assertThat(isValid(validation)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Returns false if the root node has no error but a child is invalid")
+        void t2() {
+            Trie<String> validation = trie(
+                    vec(), // no errors at the root
+                    map(tup("x", trie(
+                            vec(), // no error for "x"
+                            map(tup("y", trie(
+                                    vec("This is an error"), // an error for x.y
+                                    map()))))))); // no child
+
+            assertThat(isValid(validation)).isFalse();
         }
 
     }
@@ -56,22 +66,19 @@ public class TrieUnitTest {
     class Get {
 
         @Test
-        @DisplayName("Should do something") void t0() {
-            Trie<String> root = tree(
-                Arrays.asList("This is an error"),
-                Maps.newHashMap(
-                    "x",
-                    tree(
-                        NO_ERROR,
-                        Maps.newHashMap(
-                            "1",
-                            tree(
-                                NO_ERROR,
-                                NO_CHILD
-                            )
-                        )
-                    )
-                ));
+        @DisplayName("Should do something")
+        void t0() {
+            Trie<String> root = trie(
+                    Arrays.asList("This is an error"),
+                    Maps.newHashMap(
+                            "x",
+                            trie(
+                                    NO_ERROR,
+                                    Maps.newHashMap(
+                                            "1",
+                                            trie(
+                                                    NO_ERROR,
+                                                    NO_CHILD)))));
 
             Trie<String> node = get(Path.parse("/"), root);
             assertThat(node.getErrors()).containsExactly("This is an error");
@@ -91,64 +98,55 @@ public class TrieUnitTest {
         };
 
         @Test
-        @DisplayName("append example 1") void t0() {
-            Trie<Error> a = tree(
-                Arrays.asList(Error.errorA),
-                new HashMap<>()
-            );
+        @DisplayName("append example 1")
+        void t0() {
+            Trie<Error> a = trie(
+                    Arrays.asList(Error.errorA),
+                    new HashMap<>());
 
-            Trie<Error> b = tree(
-                Arrays.asList(Error.errorB),
-                new HashMap<>()
-            );
-
-            append(a, b);
-        }
-
-        @Test
-        @DisplayName("append example 2") void t1() {
-            Trie<Error> a = tree(
-                Arrays.asList(Error.errorA),
-                Maps.newHashMap(
-                    "x",
-                    tree(
-                        Arrays.asList(Error.errorC),
-                        new HashMap<>()
-                    )
-                )
-            );
-
-            Trie<Error> b = tree(
-                Arrays.asList(Error.errorB),
-                new HashMap<>()
-            );
+            Trie<Error> b = trie(
+                    Arrays.asList(Error.errorB),
+                    new HashMap<>());
 
             append(a, b);
         }
 
         @Test
-        @DisplayName("append example 3") void t2() {
-            Trie<Error> a = tree(
-                Arrays.asList(Error.errorA),
-                Maps.newHashMap(
-                    "x",
-                    tree(
-                        Arrays.asList(Error.errorC),
-                        new HashMap<>()
-                    )
-                )
-            );
+        @DisplayName("append example 2")
+        void t1() {
+            Trie<Error> a = trie(
+                    Arrays.asList(Error.errorA),
+                    Maps.newHashMap(
+                            "x",
+                            trie(
+                                    Arrays.asList(Error.errorC),
+                                    new HashMap<>())));
 
-            Trie<Error> b = tree(
-                Arrays.asList(Error.errorB),
-                Maps.newHashMap(
-                    "x",
-                    tree(
-                        Arrays.asList(Error.errorD),
-                        new HashMap<>()
-                    )
-                )
-            );
+            Trie<Error> b = trie(
+                    Arrays.asList(Error.errorB),
+                    new HashMap<>());
+
+            append(a, b);
+        }
+
+        @Test
+        @DisplayName("append example 3")
+        void t2() {
+            Trie<Error> a = trie(
+                    Arrays.asList(Error.errorA),
+                    Maps.newHashMap(
+                            "x",
+                            trie(
+                                    Arrays.asList(Error.errorC),
+                                    new HashMap<>())));
+
+            Trie<Error> b = trie(
+                    Arrays.asList(Error.errorB),
+                    Maps.newHashMap(
+                            "x",
+                            trie(
+                                    Arrays.asList(Error.errorD),
+                                    new HashMap<>())));
 
             append(a, b);
         }
@@ -159,40 +157,31 @@ public class TrieUnitTest {
     static class ToMap {
 
         @Test
-        @DisplayName("Some stuff") void t0() {
-            Trie<Append.Error> a = tree(
-                Arrays.asList(Append.Error.errorA),
-                Maps.newHashMap(
-                    "x",
-                    tree(
-                        Arrays.asList(Append.Error.errorC),
-                        Maps.newHashMap(
-                            "y",
-                            tree(
-                                Arrays.asList(Append.Error.errorB),
-                                Maps.newHashMap(
-                                    "z",
-                                    tree(
-                                        Arrays.asList(Append.Error.errorD),
-                                        new HashMap<>()
-                                    )
-                                )
-                            )
-                        )
-                    )
-                )
-            );
+        @DisplayName("Some stuff")
+        void t0() {
+            Trie<Append.Error> a = trie(
+                    Arrays.asList(Append.Error.errorA),
+                    Maps.newHashMap(
+                            "x",
+                            trie(
+                                    Arrays.asList(Append.Error.errorC),
+                                    Maps.newHashMap(
+                                            "y",
+                                            trie(
+                                                    Arrays.asList(Append.Error.errorB),
+                                                    Maps.newHashMap(
+                                                            "z",
+                                                            trie(
+                                                                    Arrays.asList(Append.Error.errorD),
+                                                                    new HashMap<>())))))));
 
-            Trie<Append.Error> b = tree(
-                Arrays.asList(Append.Error.errorB),
-                Maps.newHashMap(
-                    "x",
-                    tree(
-                        Arrays.asList(Append.Error.errorD),
-                        new HashMap<>()
-                    )
-                )
-            );
+            Trie<Append.Error> b = trie(
+                    Arrays.asList(Append.Error.errorB),
+                    Maps.newHashMap(
+                            "x",
+                            trie(
+                                    Arrays.asList(Append.Error.errorD),
+                                    new HashMap<>())));
 
             toMap(append(a, b));
         }

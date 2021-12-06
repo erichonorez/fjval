@@ -1,6 +1,7 @@
 package org.h5z.jval;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public final class TreeModule {
@@ -41,10 +42,15 @@ public final class TreeModule {
         }
     }
 
-    public static <E> Trie<E> tree(List<E> errors, Map<String, Trie<E>> children) {
+    public static <E> Trie<E> trie(List<E> errors, Map<String, Trie<E>> children) {
         return new Trie<>(errors, children);
     }
 
+    /**
+     * Tests if a given trie is valid.
+     * 
+     * @return <code>true</code> if the trie root node has no error and all of its children are valid. <code>false</code> otherwise.
+     */
     public static <K, E> boolean isValid(Trie<E> trie) {
         return trie.getErrors().isEmpty() &&
             trie.getChildren().entrySet()
@@ -53,8 +59,29 @@ public final class TreeModule {
                 .reduce(true, (a, b) -> a && b);
     }
 
+    public static <K, E> boolean isValid(Path path, Trie<E> trie) {
+        return isValid(get(path, trie));
+    }
+
+    /**
+     * Test if a given trie is invalid.
+     * 
+     * @return <code>true</code> if the trie root node has an error or if one of its children is invalid. <code>false</code> otherwise.
+     */
     public static <E> boolean isInvalid(Trie<E> trie) {
         return !isValid(trie);
+    }
+
+    public static <E> boolean isInvalid(Path path, Trie<E> root) {
+        return !isValid(path, root);
+    }
+
+    public static<E> boolean hasErrors(Trie<E> root) {
+        return root.getErrors().isEmpty();
+    }
+
+    public static <E> boolean hasErrors(Path path, Trie<E> root) {
+        return get(path, root).getErrors().isEmpty();
     }
 
     public static <E> Map<String, List<E>> toMap(Trie<E> root) {
@@ -77,7 +104,7 @@ public final class TreeModule {
 
         return acc;
     }
-
+ 
     /**
      * @TODO implement a safer get returning Option<Trie<E>>
      */
