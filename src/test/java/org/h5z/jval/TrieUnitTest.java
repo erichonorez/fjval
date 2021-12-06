@@ -3,24 +3,25 @@ package org.h5z.jval;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.h5z.jval.TreeModule.get;
 import static org.h5z.jval.TreeModule.isValid;
-import static org.h5z.jval.TreeModule.trie;
 import static org.h5z.jval.TreeModule.merge;
+import static org.h5z.jval.TreeModule.toMap;
+import static org.h5z.jval.TreeModule.trie;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 
+import java.util.List;
+
 import org.h5z.jval.TreeModule.Trie;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.DynamicTest.dynamicTest;
-import java.util.List;
-import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.TestFactory;
 import org.organicdesign.fp.collections.ImList;
-import org.organicdesign.fp.collections.UnmodIterable;
+import org.organicdesign.fp.collections.ImMap;
 import org.organicdesign.fp.oneOf.Option;
 import org.organicdesign.fp.tuple.Tuple2;
 import org.organicdesign.fp.tuple.Tuple3;
@@ -181,45 +182,57 @@ public class TrieUnitTest {
         }
 
     }
-    
-    /*
-     * @Nested
-     * 
-     * @DisplayName("toMap")
-     * static class ToMap {
-     * 
-     * @Test
-     * 
-     * @DisplayName("Some stuff")
-     * void t0() {
-     * Trie<Append.Error> a = trie(
-     * Arrays.asList(Append.Error.errorA),
-     * map(
-     * "x",
-     * trie(
-     * Arrays.asList(Append.Error.errorC),
-     * map(
-     * "y",
-     * trie(
-     * Arrays.asList(Append.Error.errorB),
-     * map(
-     * "z",
-     * trie(
-     * vec(Append.Error.errorD),
-     * map())))))));
-     * 
-     * Trie<Append.Error> b = trie(
-     * Arrays.asList(Append.Error.errorB),
-     * Maps.newHashMap(
-     * "x",
-     * trie(
-     * vec(Append.Error.errorD),
-     * map())));
-     * 
-     * toMap(append(a, b));
-     * }
-     * 
-     * }
-     */
+
+    @Nested
+    @DisplayName("toMap")
+    class ToMap {
+
+        @TestFactory
+        @DisplayName("Returns a map representation of the trie")
+        List<DynamicTest> t0() {
+            @NotNull
+            ImList<Tuple3<String, Trie<String>, ImMap<String, ImList<String>>>> testCases = vec(
+                tup(
+                    "a trie with error and children",
+                    trie(
+                        vec("error A", "error B"),
+                        map(
+                            tup("x", trie(
+                                vec("error C", "error D"),
+                                map(
+                                    tup("1", trie(
+                                        vec("error E"),
+                                        map()))
+                                )
+                            )),
+                            tup("y", trie(
+                                vec("error F"),
+                                map()))
+                        )
+                    ),
+                    map(
+                        tup("", vec("error A", "error B")),
+                        tup("x", vec("error C", "error D")),
+                        tup("x.1", vec("error E")),
+                        tup("y", vec("error F"))
+                    )
+                ),
+                tup(
+                    "an empty trie",
+                    trie(vec(), map()),
+                    map(tup("", vec()))
+                )
+            );
+
+            return testCases.map(tc -> {
+                String label = tc._1();
+                Trie<String> trie = tc._2();
+                ImMap<String, ImList<String>> expected = tc._3();
+
+                return dynamicTest(label, () -> assertThat(toMap(trie).equals(expected)).isTrue());
+            }).toImList();
+        }
+
+    }
 
 }

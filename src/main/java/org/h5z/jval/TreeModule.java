@@ -4,9 +4,7 @@ import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.vec;
 import static org.organicdesign.fp.StaticImports.xform;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.organicdesign.fp.collections.ImList;
 import org.organicdesign.fp.collections.ImMap;
@@ -25,11 +23,11 @@ public final class TreeModule {
             this.children = children;
         }
 
-        public List<E> getErrors() {
+        public ImList<E> getErrors() {
             return this.errors;
         }
 
-        public Map<String, Trie<E>> getChildren() {
+        public ImMap<String, Trie<E>> getChildren() {
             return this.children;
         }
 
@@ -97,27 +95,6 @@ public final class TreeModule {
 
     public static <E> boolean hasErrors(Path path, Trie<E> root) {
         return get(path, root).getErrors().isEmpty();
-    }
-
-    public static <E> Map<String, List<E>> toMap(Trie<E> root) {
-        Map<String, List<E>> map = recurToMap(root, "", new HashMap<>());
-        map.put(".", root.getErrors());
-        return map;
-    }
-
-    private static <E> Map<String, List<E>> recurToMap(Trie<E> root, String prefix, Map<String, List<E>> acc) {
-        if (root.getChildren().isEmpty()) {
-            return acc;
-        }
-
-        root.getChildren()
-                .forEach((k, v) -> {
-                    String key = "".equals(prefix) ? k : prefix + "." + k;
-                    acc.put(key, v.getErrors());
-                    recurToMap(v, key, acc);
-                });
-
-        return acc;
     }
 
     /**
@@ -207,6 +184,37 @@ public final class TreeModule {
                                     get(vec(k), b).get()) // unsafeGet
             ));
         });
+    }
+
+    /**
+     * Transforms a trie to a map.
+     * 
+     * Keys of the map are the keys of the nodes in the trie and their associated
+     * value is the list of errors of the node identified by the key in the trie.
+     * 
+     * @return a map
+     */
+    public static <E> ImMap<String, ImList<E>> toMap(Trie<E> root) {
+        return recurToMap("", root, map());
+    }
+
+    private static <E> ImMap<String, ImList<E>> recurToMap(String currentPath, Trie<E> root,
+            ImMap<String, ImList<E>> acc) {
+        ImMap<String, ImList<E>> withErrors = acc.assoc(currentPath, root.errors);
+
+        if (root.getChildren().isEmpty()) {
+            return withErrors;
+        }
+
+        return root.children
+                .fold(withErrors, (newAcc, child) -> {
+                    String nextPath = currentPath + "." + child.getKey();
+                    if ("".equals(currentPath)) {
+                        nextPath = child.getKey();
+                    }
+                    return newAcc.concat(
+                            recurToMap(nextPath, child.getValue(), map())).toImMap(Fn1.identity());
+                });
     }
 
 }
