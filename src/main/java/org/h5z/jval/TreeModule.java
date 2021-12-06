@@ -1,5 +1,7 @@
 package org.h5z.jval;
 
+import static org.organicdesign.fp.StaticImports.map;
+import static org.organicdesign.fp.StaticImports.vec;
 import static org.organicdesign.fp.StaticImports.xform;
 
 import java.util.HashMap;
@@ -8,6 +10,8 @@ import java.util.Map;
 
 import org.organicdesign.fp.collections.ImList;
 import org.organicdesign.fp.collections.ImMap;
+import org.organicdesign.fp.collections.ImSet;
+import org.organicdesign.fp.function.Fn1;
 import org.organicdesign.fp.oneOf.Option;
 
 public final class TreeModule {
@@ -161,43 +165,48 @@ public final class TreeModule {
         if (!root.getChildren().containsKey(head)) {
             return Option.none();
         }
-        
+
         Trie<E> child = root.getChildren().get(head);
         String next = tail.head().getOrElse("");
         return recurGet(next, tail.drop(1).toImList(), child);
     }
 
-    /*public static <E> Trie<E> append(Trie<E> a, Trie<E> b) {
+    /**
+     * Merges two tries together.
+     * 
+     * @return the merged trie.
+     */
+    public static <E> Trie<E> merge(Trie<E> a, Trie<E> b) {
         ImList<E> mergedErrors = a.errors.concat(b.errors);
-
         if (a.getChildren().isEmpty()
                 && b.getChildren().isEmpty()) {
             return new Trie<>(mergedErrors, map());
         }
 
-        Set<String> intersection = new HashSet<>(a.getChildren().keySet());
-        intersection.retainAll(b.getChildren().keySet());
+        ImSet<String> aKeys = a.children.keySet();
+        ImSet<String> bKeys = b.children.keySet();
+        ImSet<String> intersection = aKeys.filter(x -> bKeys.contains(x)).toImSet();
 
-        Stream<String> notInB = a.getChildren()
-                .keySet()
-                .stream()
-                .filter(k -> !intersection.contains(k));
+        ImMap<String, Trie<E>> outer = a.children.concat(b.children)
+                .filter(kv -> !intersection.contains(kv.getKey()))
+                .toImMap(Fn1.identity());
 
-        Stream<String> notInA = b.getChildren()
-                .keySet()
-                .stream()
-                .filter(k -> !intersection.contains(k));
+        Trie<E> zero = trie(mergedErrors, map());
+        Trie<E> withOuter = outer.fold(zero, (t, kv) -> {
+            return trie(
+                    t.errors,
+                    t.children.assoc(kv));
+        });
 
-        notInB.forEach(k -> mergedChildren.put(k, a.getChildren().get(k)));
-        notInA.forEach(k -> mergedChildren.put(k, b.getChildren().get(k)));
-
-        intersection.forEach(k -> mergedChildren.put(
-                k,
-                append(
-                        a.getChildren().get(k),
-                        b.getChildren().get(k))));
-
-        return new Trie<>(mergedErrors, mergedChildren);
-    }*/
+        return intersection.fold(withOuter, (t, k) -> {
+            return trie(
+                    t.errors,
+                    t.children.assoc(k,
+                            merge(
+                                    get(vec(k), a).get(), // unsafeGet
+                                    get(vec(k), b).get()) // unsafeGet
+            ));
+        });
+    }
 
 }

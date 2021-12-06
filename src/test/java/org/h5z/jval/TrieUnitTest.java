@@ -4,15 +4,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.h5z.jval.TreeModule.get;
 import static org.h5z.jval.TreeModule.isValid;
 import static org.h5z.jval.TreeModule.trie;
+import static org.h5z.jval.TreeModule.merge;
+import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 
 import org.h5z.jval.TreeModule.Trie;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.DynamicTest.dynamicTest;
+import java.util.List;
+import org.junit.jupiter.api.DynamicTest;
+import org.junit.jupiter.api.TestFactory;
+import org.organicdesign.fp.collections.ImList;
+import org.organicdesign.fp.collections.UnmodIterable;
 import org.organicdesign.fp.oneOf.Option;
+import org.organicdesign.fp.tuple.Tuple2;
+import org.organicdesign.fp.tuple.Tuple3;
 
 public class TrieUnitTest {
 
@@ -96,81 +107,81 @@ public class TrieUnitTest {
         @DisplayName("Returns an Option.none if no node exists in the trie with the given key")
         void t1() {
             Trie<Object> root = trie(
-                vec(),
-                map(tup("x", trie(
+                    vec(),
+                    map(tup("x", trie(
                             vec(), map()))));
 
             assertThat(get(vec("x", "y"), root)).isEqualTo(Option.none());
-                            
+
         }
 
     }
 
-    /*
-     * @Nested
-     * 
-     * @DisplayName("append")
-     * static class Append {
-     * 
-     * private enum Error {
-     * errorA,
-     * errorB,
-     * errorC,
-     * errorD
-     * };
-     * 
-     * @Test
-     * 
-     * @DisplayName("append example 1")
-     * void t0() {
-     * Trie<Error> a = trie(
-     * vec(Error.errorA),
-     * map());
-     * 
-     * Trie<Error> b = trie(
-     * vec(Error.errorB),
-     * map());
-     * 
-     * append(a, b);
-     * }
-     * 
-     * @Test
-     * 
-     * @DisplayName("append example 2")
-     * void t1() {
-     * Trie<Error> a = trie(
-     * vec(Error.errorA),
-     * map(tup("x", trie(
-     * vec(Error.errorC),
-     * map()))));
-     * 
-     * Trie<Error> b = trie(
-     * vec(Error.errorB),
-     * map());
-     * 
-     * append(a, b);
-     * }
-     * 
-     * @Test
-     * 
-     * @DisplayName("append example 3")
-     * void t2() {
-     * Trie<Error> a = trie(
-     * vec(Error.errorA),
-     * map(tup("x", trie(
-     * vec(Error.errorC),
-     * map()))));
-     * 
-     * Trie<Error> b = trie(
-     * vec(Error.errorB),
-     * map(tup("x", trie(
-     * vec(Error.errorD),
-     * map()))));
-     * 
-     * append(a, b);
-     * }
-     * }
-     */
+    @Nested
+    @DisplayName("merge")
+    class Merge {
+
+        @TestFactory
+        @DisplayName("Returns the merged tries")
+        List<DynamicTest> t0() {
+            @NotNull
+            ImList<Tuple2<String, Tuple3<Trie<String>, Trie<String>, Trie<String>>>> testCases = vec(
+                    tup(
+                            "Two tries with errors but without children", 
+                            tup(
+                                    trie(vec("error a", "error b"), map()), // a
+                                    trie(vec("error d", "error e"), map()), // b
+                                    trie(vec("error a", "error b", "error d", "error e"), map()))), // expected
+                    tup(
+                            "Two empty trie",
+                            tup(
+                                    trie(vec(), map()), // a
+                                    trie(vec(), map()), // be
+                                    trie(vec(), map()) // result
+                            )),
+                    tup(
+                            "Two tries with children and errors without common keys", 
+                            tup(
+                                trie(vec(), map(
+                                    tup("x", trie(vec("error a", "error b"), map()))
+                                )), // a,
+                                trie(vec(), map(
+                                    tup("y", trie(vec("error c", "error d"), map()))
+                                )), // b
+                                trie(vec(), map(
+                                    tup("x", trie(vec("error a", "error b"), map())),
+                                    tup("y", trie(vec("error c", "error d"), map()))
+                                )) // expected
+                    )),
+                    tup(
+                        "Two tries with children and errors with common keys",
+                        tup(
+                            trie(vec(), map(
+                                    tup("x", trie(vec("error a", "error b"), map()))
+                                )), // a,
+                                trie(vec(), map(
+                                    tup("y", trie(vec("error c", "error d"), map())),
+                                    tup("x", trie(vec("error e", "error f"), map()))
+                                )), // b
+                                trie(vec(), map(
+                                    tup("x", trie(vec("error a", "error b", "error e", "error f"), map())),
+                                    tup("y", trie(vec("error c", "error d"), map()))
+                                )) // expected
+                        )
+                    ));
+
+            return testCases.map(tc -> {
+                String label = tc._1();
+                Trie<String> a = tc._2()._1();
+                Trie<String> b = tc._2()._2();
+                Trie<String> expected = tc._2()._3();
+
+                return dynamicTest(label, () -> assertThat(merge(a, b)).isEqualTo(expected));
+            }).toImList();
+        }
+
+    }
+    
     /*
      * @Nested
      * 
