@@ -50,9 +50,12 @@ public final class KeyedTrie {
     /**
      * Creates a {@link KeyedValidator} given a key and a {@link Validator}.
      * 
-     * @param <T> the type of values validated
-     * @param <E> the type of errors returned by the validator
-     * @param key the key to index the result of the validator
+     * Example: If the given key is `x` then the result of the validator will be
+     * accessible with the key `x` in the resulting trie.
+     * 
+     * @param <T>       the type of values validated
+     * @param <E>       the type of errors returned by the validator
+     * @param key       the key to index the result of the validator
      * @param validator the validator to apply
      * 
      * @return a keyed validator.
@@ -67,6 +70,19 @@ public final class KeyedTrie {
         };
     }
 
+    /**
+     * Creates a {@link KeyedValidator} given a key and another {@KeyedValidator}.
+     * 
+     * Example: If the result of given {@link KeyedValidator} is keyed on a key 'x'
+     * and the given key is 'y' then the result of new validator will be accessible
+     * with the key at `x -> y` in the resulting trie.
+     * 
+     * @param <E>       the type of errors returned by the validator
+     * @param key       the key to index the result of the validator
+     * @param validator the validator to apply
+     * 
+     * @return
+     */
     public static <E> KeyedValidator<String, E> keyed(String key, KeyedValidator<String, E> validator) {
         return v -> trie(vec(), map(tup(key, validator.apply(v))));
     }
