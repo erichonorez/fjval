@@ -12,6 +12,7 @@ import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 
 import java.util.List;
+import java.util.function.BiFunction;
 
 import org.h5z.jval.TreeModule.Trie;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public class TrieUnitTest {
         @Test
         @DisplayName("Returns true if the trie root node has no error and all of its children are valid")
         void t0() {
-            Trie<String> validation = trie(
+            Trie<String, String> validation = trie(
                     vec(), // no error at the root
                     map(tup("x", trie(
                             vec(), // no error for "x"
@@ -47,7 +48,7 @@ public class TrieUnitTest {
         @Test
         @DisplayName("Returns false if the root node has an error and all of its children are valid")
         void t1() {
-            Trie<String> validation = trie(
+            Trie<String, String> validation = trie(
                     vec("this is an error"), // an error at the root
                     map(tup("x", trie(
                             vec(), // no error for x
@@ -59,7 +60,7 @@ public class TrieUnitTest {
         @Test
         @DisplayName("Returns false if the root node has no error but a child is invalid")
         void t2() {
-            Trie<String> validation = trie(
+            Trie<String, String> validation = trie(
                     vec(), // no errors at the root
                     map(tup("x", trie(
                             vec(), // no error for "x"
@@ -79,7 +80,7 @@ public class TrieUnitTest {
         @Test
         @DisplayName("Returns the node at given key in the given trie if it exists")
         void t0() {
-            Trie<String> root = trie(
+            Trie<String, String> root = trie(
                     vec(),
                     map(tup("x", trie(
                             vec(),
@@ -97,7 +98,7 @@ public class TrieUnitTest {
                                             vec(),
                                             map())))))));
 
-            Option<Trie<Object>> expected = Option.some(trie(
+            Option<Trie<String, Object>> expected = Option.some(trie(
                     vec(),
                     map()));
 
@@ -107,7 +108,7 @@ public class TrieUnitTest {
         @Test
         @DisplayName("Returns an Option.none if no node exists in the trie with the given key")
         void t1() {
-            Trie<Object> root = trie(
+            Trie<String, Object> root = trie(
                     vec(),
                     map(tup("x", trie(
                             vec(), map()))));
@@ -126,7 +127,7 @@ public class TrieUnitTest {
         @DisplayName("Returns the merged tries")
         List<DynamicTest> t0() {
             @NotNull
-            ImList<Tuple2<String, Tuple3<Trie<String>, Trie<String>, Trie<String>>>> testCases = vec(
+            ImList<Tuple2<String, Tuple3<Trie<String, String>, Trie<String, String>, Trie<String, String>>>> testCases = vec(
                     tup(
                             "Two tries with errors but without children", 
                             tup(
@@ -173,9 +174,9 @@ public class TrieUnitTest {
 
             return testCases.map(tc -> {
                 String label = tc._1();
-                Trie<String> a = tc._2()._1();
-                Trie<String> b = tc._2()._2();
-                Trie<String> expected = tc._2()._3();
+                Trie<String, String> a = tc._2()._1();
+                Trie<String, String> b = tc._2()._2();
+                Trie<String, String> expected = tc._2()._3();
 
                 return dynamicTest(label, () -> assertThat(merge(a, b)).isEqualTo(expected));
             }).toImList();
@@ -191,7 +192,7 @@ public class TrieUnitTest {
         @DisplayName("Returns a map representation of the trie")
         List<DynamicTest> t0() {
             @NotNull
-            ImList<Tuple3<String, Trie<String>, ImMap<String, ImList<String>>>> testCases = vec(
+            ImList<Tuple3<String, Trie<String, String>, ImMap<String, ImList<String>>>> testCases = vec(
                 tup(
                     "a trie with error and children",
                     trie(
@@ -226,10 +227,12 @@ public class TrieUnitTest {
 
             return testCases.map(tc -> {
                 String label = tc._1();
-                Trie<String> trie = tc._2();
+                Trie<String, String> trie = tc._2();
                 ImMap<String, ImList<String>> expected = tc._3();
 
-                return dynamicTest(label, () -> assertThat(toMap(trie).equals(expected)).isTrue());
+                BiFunction<String, String, String> concat = (a, b) -> "".equals(a) ? b : a + "." + b;
+
+                return dynamicTest(label, () -> assertThat(toMap(trie, "", concat).equals(expected)).isTrue());
             }).toImList();
         }
 
