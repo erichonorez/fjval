@@ -1,10 +1,14 @@
 package org.h5z.jval;
 
 import static org.h5z.jval.TreeModule.trie;
+import static org.h5z.jval.TreeModule.merge;
+import static org.h5z.jval.TreeModule.isInvalid;
+
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 import static org.organicdesign.fp.StaticImports.xform;
+import static org.organicdesign.fp.StaticImports.xformArray;
 
 import java.util.List;
 import java.util.function.Function;
@@ -77,27 +81,46 @@ public final class KeyedTrie {
      * and the given key is 'y' then the result of new validator will be accessible
      * with the key at `x -> y` in the resulting trie.
      * 
+     * @param <T>       the type of values validated
      * @param <E>       the type of errors returned by the validator
      * @param key       the key to index the result of the validator
      * @param validator the validator to apply
      * 
      * @return
      */
-    public static <E> KeyedValidator<String, E> keyed(String key, KeyedValidator<String, E> validator) {
+    public static <T, E> KeyedValidator<T, E> keyed(String key, KeyedValidator<T, E> validator) {
         return v -> trie(vec(), map(tup(key, validator.apply(v))));
     }
 
-    public static <K, T, E> KeyedValidator<K, E> sequentially(KeyedValidator<K, E>... validators) {
+    /**
+     * <b>Combinator</b> - Create a validator that will execute sequentially the
+     * given validators and return the errors of the first failed validator. The
+     * execution of the validators stops at the first failed validators (fail-fast).
+     * 
+     * @param <T>        the type of values validated
+     * @param <E>        the type of errors returned by the validator
+     * @param validators the sequence of validator to evaluate.
+     * 
+     * @return a valid trie if all validators succeed. A trie with only the errors
+     *         of the first failed validator otherwise.
+     */
+    public static <T, E> KeyedValidator<T, E> sequentially(KeyedValidator<T, E>... validators) {
         return v -> {
-            // TODO: implement it using recursion
-            for (KeyedValidator<K, E> x : validators) {
-                Trie<E> validated = x.apply(v);
-                if (TreeModule.isInvalid(validated)) {
-                    return validated;
-                }
-            }
-            return valid(v);
+            return recurSequentially(v, xformArray(validators).toImList(), trie(vec(), map()));
         };
+    }
+
+    private static <T, E> Trie<E> recurSequentially(T value, ImList<KeyedValidator<T, E>> validators, Trie<E> acc) {
+        return validators.head()
+            .match(v -> { 
+                Trie<E> validated = v.validate(value);
+                Trie<E> newAcc = merge(acc, validated);
+                if (isInvalid(validated)) {
+                    return newAcc;
+                }
+                return recurSequentially(value, validators.drop(1).toImList(), newAcc);
+            }, () -> acc);
+
     }
 
     /**

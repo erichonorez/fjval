@@ -8,7 +8,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import static org.h5z.jval.TreeModule.*;
-import static org.h5z.jval.KeyedTrie.keyed;
+import static org.h5z.jval.Validators.*;
+import static org.h5z.jval.KeyedTrie.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.organicdesign.fp.StaticImports.*;
 
@@ -52,14 +53,47 @@ public class KeyedTrieUnitTest {
                 Trie<String> validated = yxContainsA.validate("");
 
                 assertThat(validated)
-                    .isEqualTo(
-                        trie(vec(),
-                             map(tup("y", 
-                                    trie(vec(),
-                                         map(tup("x", 
-                                             trie(vec("Does not contains a"), map()))))))));
+                        .isEqualTo(
+                                trie(vec(),
+                                        map(tup("y",
+                                                trie(vec(),
+                                                        map(tup("x",
+                                                                trie(vec("Does not contains a"), map()))))))));
             }
 
+        }
+
+    }
+
+    @Nested
+    @DisplayName("sequentially")
+    class Sequentially {
+
+        @Test
+        @DisplayName("Returns a valid trie if all validators succeed")
+        void t0() {
+            KeyedValidator<Integer, String> sequentially = sequentially(
+                    keyed("x", gt(0, () -> "Should be gt 0")), 
+                    keyed("y", gt(0, () -> "Should be gt 0")));
+
+            Trie<String> result = sequentially.apply(1);
+            assertThat(result)
+                    .isEqualTo(trie(vec(), map(
+                            tup("x", trie(vec(), map())),
+                            tup("y", trie(vec(), map())))));
+        }
+
+        @Test
+        @DisplayName("Returns a trie with only the errors of the first failed validator")
+        void t1() {
+            KeyedValidator<Integer, String> sequentially = sequentially(
+                    keyed("x", gt(2, () -> "Should be gt 2")),
+                    keyed("y", gt(0, () -> "Should be gt 0")));
+            
+            Trie<String> result = sequentially.apply(1);
+            assertThat(result)
+                .isEqualTo(trie(vec(), map(
+                    tup("x", trie(vec("Should be gt 2"), map())))));
         }
 
     }

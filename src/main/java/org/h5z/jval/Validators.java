@@ -1,6 +1,8 @@
 package org.h5z.jval;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -28,6 +30,12 @@ public final class Validators {
             }
             return result;
         };
+    }
+
+    public static <T extends Comparable<T>, E> Validator<T, E> gte(T b, Function<T, E> fn) {
+        return v -> v.compareTo(b) < 0 
+                        ? invalid(fn.apply(v))
+                        : valid(v);
     }
 
     public static <T extends Comparable<T>, E> Validator<T, E> eq(T b, Supplier<E> s) {
