@@ -242,21 +242,46 @@ public final class KeyedTrie {
     }
 
     /**
-     * Creates a validators that will apply the validator only if the validated value is not null.
+     * Creates a validator that will apply the given validator only if the validated
+     * value is not null. If the validated value is null it returns a given error.
+     * Otherwise it executes the validator and returns its result.
      * 
-     * @param <T>        the type of values validated
-     * @param <E>        the type of errors returned by the validator
-     * @param validator  the validator to apply if the validated value is not null
-     * @param lazyE      the error to return in an trie if the validated value is null
+     * @param <T>       the type of values validated
+     * @param <E>       the type of errors returned by the validator
+     * @param validator the validator to apply if the validated value is not null
+     * @param lazyE     the error to return in an trie if the validated value is
+     *                  null
      * 
-     * @return           Returns an invalid trie with the given error if the validated value is null.
-     *                   Returns an invalid trie with the errors of the validators if the validated value is not null and invalid.
-     *                   Returns an valid trie if the validated value is not null and valid
+     * @return Returns an invalid trie with the given error if the validated value
+     *         is null.
+     *         Returns an invalid trie with the errors of the validators if the
+     *         validated value is not null and invalid.
+     *         Returns an valid trie if the validated value is not null and valid
      */
     public static <K, E> KeyedValidator<K, E> required(KeyedValidator<K, E> validator, Supplier<E> lazyE) {
         return x -> {
             if (null == x) {
                 return trie(vec(lazyE.get()), map());
+            }
+            return validator.apply(x);
+        };
+    }
+
+    /**
+     * Creates a validator that will apply the given validator only if the validator
+     * value is not null. If the validated value is null it return a valid trie.
+     * Otherwise it executes the validator and returns its result.
+     * 
+     * @param <T>       the type of values validated
+     * @param <E>       the type of errors returned by the validator
+     * @param validator the validator to apply if the validated value is not null
+     * 
+     * @return           Returns a valid trie if the validated value is null.
+     */
+    public static <T, E> KeyedValidator<T, E> optional(KeyedValidator<T, E> validator) {
+        return x -> {
+            if (null == x) {
+                return trie(vec(), map());
             }
             return validator.apply(x);
         };

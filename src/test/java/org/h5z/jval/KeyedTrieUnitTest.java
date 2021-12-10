@@ -7,6 +7,7 @@ import static org.h5z.jval.KeyedTrie.list;
 import static org.h5z.jval.KeyedTrie.prop;
 import static org.h5z.jval.KeyedTrie.sequentially;
 import static org.h5z.jval.KeyedTrie.required;
+import static org.h5z.jval.KeyedTrie.optional;
 import static org.h5z.jval.TreeModule.trie;
 import static org.h5z.jval.Validators.gt;
 import static org.organicdesign.fp.StaticImports.map;
@@ -335,6 +336,55 @@ public class KeyedTrieUnitTest {
             private final Integer x;
 
             public Point(Integer x) {
+                this.x = x;
+            }
+
+            public int getX() {
+                return this.x;
+            }
+
+        }
+
+    }
+
+    @Nested
+    @DisplayName("Optional")
+    class Optional {
+        
+        Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
+        KeyedValidator<Point, String> pointValidator = optional( // the validated object `Point` is optional
+                keyed("x", Core.prop(Point::getX, xValidator))
+        );
+
+        @Test
+        @DisplayName("Returns a valid trie if the validated value is null") 
+        void t0() {
+            assertThat(pointValidator.validate(null))
+                    .isEqualTo(trie(vec(), map()));
+        }
+
+        @Test
+        @DisplayName("Returns a valid trie if the validated value is not null and is valid") 
+        void t1() {
+            assertThat(pointValidator.validate(new Point(1)))
+                    .isEqualTo(trie(vec(), map(
+                        tup("x", trie(vec(), map()))
+                    )));
+        }
+
+        @Test
+        @DisplayName("Returns a invalid trie if the validated value is not null and is invalid")
+        void t2() {
+            assertThat(pointValidator.validate(new Point(-1)))
+                    .isEqualTo(trie(vec(), map(
+                        tup("x", trie(vec("Should be gt 0"), map()))
+                    )));
+        }
+
+        class Point {
+            private final int x;
+
+            public Point(int x) {
                 this.x = x;
             }
 
