@@ -12,6 +12,7 @@ import static org.organicdesign.fp.StaticImports.xformArray;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import org.h5z.jval.Core.Validator;
@@ -237,6 +238,27 @@ public final class KeyedTrie {
                     .mapToObj(i -> keyed(String.valueOf(i), (T xs) -> validator.apply(xs.get(i))))
                     .toList();
             return reducer.apply(validators).apply(t);
+        };
+    }
+
+    /**
+     * Creates a validators that will apply the validator only if the validated value is not null.
+     * 
+     * @param <T>        the type of values validated
+     * @param <E>        the type of errors returned by the validator
+     * @param validator  the validator to apply if the validated value is not null
+     * @param lazyE      the error to return in an trie if the validated value is null
+     * 
+     * @return           Returns an invalid trie with the given error if the validated value is null.
+     *                   Returns an invalid trie with the errors of the validators if the validated value is not null and invalid.
+     *                   Returns an valid trie if the validated value is not null and valid
+     */
+    public static <K, E> KeyedValidator<K, E> required(KeyedValidator<K, E> validator, Supplier<E> lazyE) {
+        return x -> {
+            if (null == x) {
+                return trie(vec(lazyE.get()), map());
+            }
+            return validator.apply(x);
         };
     }
 

@@ -6,6 +6,7 @@ import static org.h5z.jval.KeyedTrie.keyed;
 import static org.h5z.jval.KeyedTrie.list;
 import static org.h5z.jval.KeyedTrie.prop;
 import static org.h5z.jval.KeyedTrie.sequentially;
+import static org.h5z.jval.KeyedTrie.required;
 import static org.h5z.jval.TreeModule.trie;
 import static org.h5z.jval.Validators.gt;
 import static org.organicdesign.fp.StaticImports.map;
@@ -246,23 +247,18 @@ public class KeyedTrieUnitTest {
                         new Point(1),
                         new Point(1),
                         new Point(1)));
-                
+
                 assertThat(result).isEqualTo(trie(vec(), map(
-                                tup("0", trie(vec(), map(
-                                    tup("x", trie(vec(), map()))
-                                ))),
-                                tup("1", trie(vec(), map(
-                                    tup("x", trie(vec(), map()))
-                                ))),
-                                tup("2", trie(vec(), map(
-                                    tup("x", trie(vec(), map()))
-                                ))),
-                                tup("3", trie(vec(), map(
-                                    tup("x", trie(vec(), map()))
-                                ))),
-                                tup("4", trie(vec(), map(
-                                    tup("x", trie(vec(), map()))
-                                ))))));
+                        tup("0", trie(vec(), map(
+                                tup("x", trie(vec(), map()))))),
+                        tup("1", trie(vec(), map(
+                                tup("x", trie(vec(), map()))))),
+                        tup("2", trie(vec(), map(
+                                tup("x", trie(vec(), map()))))),
+                        tup("3", trie(vec(), map(
+                                tup("x", trie(vec(), map()))))),
+                        tup("4", trie(vec(), map(
+                                tup("x", trie(vec(), map()))))))));
             }
 
             @Test
@@ -303,4 +299,50 @@ public class KeyedTrieUnitTest {
 
     }
 
+    @Nested
+    @DisplayName("required")
+    class Required {
+
+        Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
+        KeyedValidator<Point, String> pointValidator = required( // the validated object `Point` is required
+                keyed("x", Core.prop(Point::getX, xValidator)),
+                () -> "Required");
+
+        @Test
+        @DisplayName("Returns an invalid trie with the given error if the validated value is null")
+        void t0() {
+            assertThat(pointValidator.validate(null))
+                    .isEqualTo(trie(vec("Required"), map()));
+        }
+
+        @Test
+        @DisplayName("Returns an invalid trie with the errors of the validators if the validated value is not null and invalid")
+        void t1() {
+            assertThat(pointValidator.validate(new Point(-1)))
+                    .isEqualTo(trie(vec(), map(
+                            tup("x", trie(vec("Should be gt 0"), map())))));
+        }
+
+        @Test
+        @DisplayName("Returns an valid trie if the validated value is not null and valid")
+        void t2() {
+            assertThat(pointValidator.validate(new Point(1)))
+                    .isEqualTo(trie(vec(), map(
+                            tup("x", trie(vec(), map())))));
+        }
+
+        class Point {
+            private final Integer x;
+
+            public Point(Integer x) {
+                this.x = x;
+            }
+
+            public int getX() {
+                return this.x;
+            }
+
+        }
+
+    }
 }
