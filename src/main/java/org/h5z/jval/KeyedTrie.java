@@ -141,7 +141,7 @@ public final class KeyedTrie {
      * 
      * @param <T>        the type of values validated
      * @param <E>        the type of errors returned by the validator
-     * @param validators the sequence of validator to evaluate.
+     * @param validators the sequence of validator to evaluate
      * @return a valid trie if all validators succeeded. A trie with the errors of
      *         all failed validators otherwise.
      */
@@ -151,8 +151,22 @@ public final class KeyedTrie {
                 .fold(trie(vec(), map()), TreeModule::merge);
     }
 
-    public static <O, T, E> KeyedValidator<O, E> prop(Function<O, T> property, KeyedValidator<T, E> validator) {
-        return x -> validator.apply(property.apply(x));
+    /**
+     * <b>Combinator</b> - Creates a validator that will first extract the value to
+     * validate by calling the given fn on the provided value and then pass it to the
+     * given validator.
+     * 
+     * @param <O>        the type of object accepted by the given fn
+     * @param <T>        the type of values validated
+     * @param <E>        the type of errors returned by the validator
+     * @param fn         a function returning an instance of type T given an instance of type O
+     * @param validator  the validator to apply on the extracted value
+     * 
+     * @return an trie if the given validator succeeded. A trie containing the
+     *         collected errors otherwise.
+     */
+    public static <O, T, E> KeyedValidator<O, E> prop(Function<O, T> fn, KeyedValidator<T, E> validator) {
+        return x -> validator.apply(fn.apply(x));
     }
 
 }

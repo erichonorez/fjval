@@ -138,4 +138,58 @@ public class KeyedTrieUnitTest {
 
     }
 
+    @Nested
+    @DisplayName("prop")
+    static class Prop {
+
+        Validator<Integer, String> gt0 = v -> v > 0 ? Core.valid(v) : Core.invalid("gt0");
+        KeyedValidator<RootClass, String> rootValidator = keyed("x", 
+                prop(RootClass::getX, keyed("y",
+                    Core.prop(NestedClass::getY, gt0))));
+
+        @Test
+        @DisplayName("Returns a valid trie if the given validator succeeded")
+        void t0() {
+            assertThat( 
+                rootValidator.apply(new RootClass(new NestedClass(1)))
+            ).isEqualTo(trie(vec(), map(tup("x", trie(vec(), map(tup("y", trie(vec(), map()))))))));
+        }
+
+        @Test
+        @DisplayName("Returns the errors return by the given validator otherwise")
+        void t1() {
+            assertThat(
+                rootValidator.apply(new RootClass(new NestedClass(0)))
+            ).isEqualTo(trie(vec(), map(
+                tup("x", trie(vec(), map(
+                    tup("y", trie(vec("gt0"), map()))))))));
+                
+        }
+
+        static class RootClass {
+            private final NestedClass x;
+
+            RootClass(NestedClass x) {
+                this.x = x;
+            }
+
+            public NestedClass getX() {
+                return this.x;
+            }
+        }
+
+        static class NestedClass {
+            private final int y;
+
+            NestedClass(int y) {
+                this.y = y;
+            }
+
+            public int getY() {
+                return this.y;
+            }
+        }
+
+    }
+
 }
