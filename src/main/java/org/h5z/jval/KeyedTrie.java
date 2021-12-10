@@ -76,6 +76,8 @@ public final class KeyedTrie {
 
     /**
      * Creates a {@link KeyedValidator} given a key and another {@KeyedValidator}.
+     * The given key will be used to access the result of the given valitors in the
+     * resulting trie.
      * 
      * Example: If the result of given {@link KeyedValidator} is keyed on a key 'x'
      * and the given key is 'y' then the result of new validator will be accessible
@@ -93,7 +95,7 @@ public final class KeyedTrie {
     }
 
     /**
-     * <b>Combinator</b> - Create a validator that will execute sequentially the
+     * <b>Combinator</b> - Creates a validator that will execute sequentially the
      * given validators and return the errors of the first failed validator. The
      * execution of the validators stops at the first failed validators (fail-fast).
      * 
@@ -112,14 +114,14 @@ public final class KeyedTrie {
 
     private static <T, E> Trie<E> recurSequentially(T value, ImList<KeyedValidator<T, E>> validators, Trie<E> acc) {
         return validators.head()
-            .match(v -> { 
-                Trie<E> validated = v.validate(value);
-                Trie<E> newAcc = merge(acc, validated);
-                if (isInvalid(validated)) {
-                    return newAcc;
-                }
-                return recurSequentially(value, validators.drop(1).toImList(), newAcc);
-            }, () -> acc);
+                .match(v -> {
+                    Trie<E> validated = v.validate(value);
+                    Trie<E> newAcc = merge(acc, validated);
+                    if (isInvalid(validated)) {
+                        return newAcc;
+                    }
+                    return recurSequentially(value, validators.drop(1).toImList(), newAcc);
+                }, () -> acc);
 
     }
 
@@ -130,6 +132,18 @@ public final class KeyedTrie {
      * All of the validators are evaluated even if some of the fail.
      *
      * The errors returned by each validator are collected and returned.
+     */
+
+    /**
+     * <b>Combinator</b> - Creates a validator that will execute all the
+     * given validators and returns the aggregated results. This validator does not
+     * stop at the first failed validator.
+     * 
+     * @param <T>        the type of values validated
+     * @param <E>        the type of errors returned by the validator
+     * @param validators the sequence of validator to evaluate.
+     * @return a valid trie if all validators succeeded. A trie with the errors of
+     *         all failed validators otherwise.
      */
     public static <K, E> KeyedValidator<K, E> every(KeyedValidator<K, E>... validators) {
         return v -> vec(validators)

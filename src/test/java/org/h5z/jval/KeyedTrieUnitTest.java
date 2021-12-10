@@ -73,7 +73,7 @@ public class KeyedTrieUnitTest {
         @DisplayName("Returns a valid trie if all validators succeed")
         void t0() {
             KeyedValidator<Integer, String> sequentially = sequentially(
-                    keyed("x", gt(0, () -> "Should be gt 0")), 
+                    keyed("x", gt(0, () -> "Should be gt 0")),
                     keyed("y", gt(0, () -> "Should be gt 0")));
 
             Trie<String> result = sequentially.apply(1);
@@ -89,11 +89,51 @@ public class KeyedTrieUnitTest {
             KeyedValidator<Integer, String> sequentially = sequentially(
                     keyed("x", gt(2, () -> "Should be gt 2")),
                     keyed("y", gt(0, () -> "Should be gt 0")));
-            
+
             Trie<String> result = sequentially.apply(1);
             assertThat(result)
-                .isEqualTo(trie(vec(), map(
-                    tup("x", trie(vec("Should be gt 2"), map())))));
+                    .isEqualTo(trie(vec(), map(
+                            tup("x", trie(vec("Should be gt 2"), map())))));
+        }
+
+    }
+
+    @Nested
+    @DisplayName("every")
+    class Every {
+
+        @Test
+        @DisplayName("Returns a valid trie if all validators succeeded")
+        void t0() {
+            KeyedValidator<Integer, String> every = every(
+                    keyed("x", gt(0, () -> "Should be gt 0")),
+                    keyed("y", gt(0, () -> "Should be gt 0")));
+
+            Trie<String> result = every.apply(1);
+            assertThat(result)
+                    .isEqualTo(trie(vec(), map(
+                            tup("x", trie(vec(), map())),
+                            tup("y", trie(vec(), map())))));
+        }
+
+        @Test
+        @DisplayName("Returns a trie with the errors of all failed validators otherwise.")
+        void t1() {
+            KeyedValidator<Integer, String> every = every(
+                    keyed("a", gt(-1, () -> "Should be gt -1")),
+                    keyed("b", gt(1, () -> "Should be gt 1")),
+                    keyed("c", gt(2, () -> "Should be gt 2")),
+                    keyed("d", gt(3, () -> "Should be gt 3")),
+                    keyed("e", gt(-1, () -> "Should be gt -1")));
+
+            Trie<String> result = every.apply(0);
+            assertThat(result)
+                    .isEqualTo(trie(vec(), map(
+                            tup("a", trie(vec(), map())),
+                            tup("b", trie(vec("Should be gt 1"), map())),
+                            tup("c", trie(vec("Should be gt 2"), map())),
+                            tup("d", trie(vec("Should be gt 3"), map())),
+                            tup("e", trie(vec(), map())))));
         }
 
     }
