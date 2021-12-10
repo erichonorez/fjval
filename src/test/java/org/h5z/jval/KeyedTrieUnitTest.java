@@ -41,7 +41,7 @@ public class KeyedTrieUnitTest {
 
                 assertThat(validated)
                         .isEqualTo(trie(vec(), map(
-                            tup("x", trie(vec("Does not contains a"), map())))));
+                                tup("x", trie(vec("Does not contains a"), map())))));
             }
 
         }
@@ -58,7 +58,7 @@ public class KeyedTrieUnitTest {
 
                 assertThat(validated)
                         .isEqualTo(trie(vec(), map(
-                                    tup("y", trie(vec(), map(
+                                tup("y", trie(vec(), map(
                                         tup("x", trie(vec("Does not contains a"), map()))))))));
             }
 
@@ -144,27 +144,27 @@ public class KeyedTrieUnitTest {
     static class Prop {
 
         Validator<Integer, String> gt0 = v -> v > 0 ? Core.valid(v) : Core.invalid("gt0");
-        KeyedValidator<RootClass, String> rootValidator = keyed("x", 
+        KeyedValidator<RootClass, String> rootValidator = keyed("x",
                 prop(RootClass::getX, keyed("y",
-                    Core.prop(NestedClass::getY, gt0))));
+                        Core.prop(NestedClass::getY, gt0))));
 
         @Test
         @DisplayName("Returns a valid trie if the given validator succeeded")
         void t0() {
-            assertThat( 
-                rootValidator.apply(new RootClass(new NestedClass(1)))
-            ).isEqualTo(trie(vec(), map(tup("x", trie(vec(), map(tup("y", trie(vec(), map()))))))));
+            assertThat(
+                    rootValidator.apply(new RootClass(new NestedClass(1))))
+                            .isEqualTo(trie(vec(), map(tup("x", trie(vec(), map(tup("y", trie(vec(), map()))))))));
         }
 
         @Test
         @DisplayName("Returns the errors return by the given validator otherwise")
         void t1() {
             assertThat(
-                rootValidator.apply(new RootClass(new NestedClass(0)))
-            ).isEqualTo(trie(vec(), map(
-                tup("x", trie(vec(), map(
-                    tup("y", trie(vec("gt0"), map()))))))));
-                
+                    rootValidator.apply(new RootClass(new NestedClass(0)))).isEqualTo(
+                            trie(vec(), map(
+                                    tup("x", trie(vec(), map(
+                                            tup("y", trie(vec("gt0"), map()))))))));
+
         }
 
         static class RootClass {
@@ -197,30 +197,108 @@ public class KeyedTrieUnitTest {
     @DisplayName("list")
     class List {
 
-        @Test
-        @DisplayName("Retuns a valid trie if all the elements in the list are valid") void t0() {
-            var listValidator = list(gt(0, () -> "Should be gt 0"));
-            assertThat(listValidator.apply(vec(1, 2, 3, 4, 5)))
-                .isEqualTo(trie(vec(), map(
-                    tup("0", trie(vec(), map())),
-                    tup("1", trie(vec(), map())),
-                    tup("2", trie(vec(), map())),
-                    tup("3", trie(vec(), map())),
-                    tup("4", trie(vec(), map()))
-                )));
+        @Nested
+        @DisplayName("With simple validator")
+        class WithSimpleValidator {
+
+            @Test
+            @DisplayName("Retuns a valid trie if all the elements in the list are valid")
+            void t0() {
+                var listValidator = list(gt(0, () -> "Should be gt 0"), KeyedTrie::every);
+                assertThat(listValidator.apply(vec(1, 2, 3, 4, 5)))
+                        .isEqualTo(trie(vec(), map(
+                                tup("0", trie(vec(), map())),
+                                tup("1", trie(vec(), map())),
+                                tup("2", trie(vec(), map())),
+                                tup("3", trie(vec(), map())),
+                                tup("4", trie(vec(), map())))));
+            }
+
+            @Test
+            @DisplayName("Return a trie with the errors of all failed validators")
+            void t1() {
+                var listValidator = list(gt(0, () -> "Should be gt 0"), KeyedTrie::every);
+                assertThat(listValidator.apply(vec(0, 0, 0, 0, 0)))
+                        .isEqualTo(trie(vec(), map(
+                                tup("0", trie(vec("Should be gt 0"), map())),
+                                tup("1", trie(vec("Should be gt 0"), map())),
+                                tup("2", trie(vec("Should be gt 0"), map())),
+                                tup("3", trie(vec("Should be gt 0"), map())),
+                                tup("4", trie(vec("Should be gt 0"), map())))));
+            }
+
         }
 
-        @Test
-        @DisplayName("Return a trie with the errors of all failed validators") void t1() {
-            var listValidator = list(gt(0, () -> "Should be gt 0"));
-            assertThat(listValidator.apply(vec(0, 0, 0, 0, 0)))
-                .isEqualTo(trie(vec(), map(
-                    tup("0", trie(vec("Should be gt 0"), map())),
-                    tup("1", trie(vec("Should be gt 0"), map())),
-                    tup("2", trie(vec("Should be gt 0"), map())),
-                    tup("3", trie(vec("Should be gt 0"), map())),
-                    tup("4", trie(vec("Should be gt 0"), map()))
-                )));
+        @Nested
+        @DisplayName("With keyed validator")
+        class WithKeyedValidator {
+
+            Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
+            KeyedValidator<Point, String> pointValidator = keyed("x", Core.prop(Point::getX, xValidator));
+            KeyedValidator<java.util.List<Point>, String> listOfPointValidator = list(pointValidator, KeyedTrie::every);
+
+            @Test
+            @DisplayName("Retuns a valid trie if all the elements in the list are valid")
+            void t0() {
+                Trie<String> result = listOfPointValidator.apply(vec(
+                        new Point(1),
+                        new Point(1),
+                        new Point(1),
+                        new Point(1),
+                        new Point(1)));
+                
+                assertThat(result).isEqualTo(trie(vec(), map(
+                                tup("0", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))
+                                ))),
+                                tup("1", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))
+                                ))),
+                                tup("2", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))
+                                ))),
+                                tup("3", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))
+                                ))),
+                                tup("4", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))
+                                ))))));
+            }
+
+            @Test
+            @DisplayName("Return a trie with the errors of all failed validators")
+            void t1() {
+                assertThat(listOfPointValidator.apply(vec(
+                        new Point(0),
+                        new Point(0),
+                        new Point(0),
+                        new Point(0),
+                        new Point(0)))).isEqualTo(trie(vec(), map(
+                                tup("0", trie(vec(), map(
+                                        tup("x", trie(vec("Should be gt 0"), map()))))),
+                                tup("1", trie(vec(), map(
+                                        tup("x", trie(vec("Should be gt 0"), map()))))),
+                                tup("2", trie(vec(), map(
+                                        tup("x", trie(vec("Should be gt 0"), map()))))),
+                                tup("3", trie(vec(), map(
+                                        tup("x", trie(vec("Should be gt 0"), map()))))),
+                                tup("4", trie(vec(), map(
+                                        tup("x", trie(vec("Should be gt 0"), map()))))))));
+            }
+
+            class Point {
+                private final int x;
+
+                public Point(int x) {
+                    this.x = x;
+                }
+
+                public int getX() {
+                    return this.x;
+                }
+
+            }
+
         }
 
     }

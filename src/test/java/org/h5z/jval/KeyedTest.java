@@ -16,19 +16,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class KeyedTest {
 
     @Test
-    public void itShouldValidateAValue() {
-        int value = 41;
-        Keyed.KeyedValidator<String, Integer, String> validator =
-            keyed("value", eq(42, () -> "Not equal to 42"));
-
-        Map<String, List<String>> validated = validator.apply(value);
-        assertAll(
-            () -> assertTrue(validated.keySet().contains("value")),
-            () -> assertEquals("Not equal to 42", validated.get("value"))
-        );
-    }
-
-    @Test
     public void itShouldValidatedAnOjectWithOneProp() {
         keyed("x", prop(Coords::getX, eq(42, () -> "Should be equal to 42")));
     }

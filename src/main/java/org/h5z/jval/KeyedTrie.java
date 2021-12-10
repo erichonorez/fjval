@@ -192,17 +192,51 @@ public final class KeyedTrie {
      * @param <T>       the type of the list
      * @param <E>       the type of errors returned by the validator
      * @param validator the validator to apply to all elements of a list
+     * @param reducer   a function reducing a List<KeyedValidator<T, E>> to a
+     *                  KeyedValidator<T, E>
      * 
      * @return a valid trie if the given validator succeeded. A trie containing the
      *         collected errors otherwise.
      */
-    public static <V, T extends List<V>, E> KeyedValidator<T, E> list(Validator<V, E> validator) {
+    public static <V, T extends List<V>, E> KeyedValidator<T, E> list(
+            Validator<V, E> validator,
+            Function<List<KeyedValidator<T, E>>, KeyedValidator<T, E>> reducer) {
         return t -> {
             List<KeyedValidator<T, E>> validators = IntStream
                     .range(0, t.size())
                     .mapToObj(i -> keyed(String.valueOf(i), (T xs) -> validator.apply(xs.get(i))))
                     .toList();
-            return every(validators).apply(t);
+            return reducer.apply(validators).apply(t);
+        };
+    }
+
+    /**
+     * <b>Combinator</b> - Creates a validator that will validate all the elements
+     * of a list with the given validator. The validator will validates all the
+     * elements of the list and return the collected errors.
+     * It has the same behavior than {@link KeyedTrie#every(KeyedValidator...)}
+     * 
+     * @see {@link KeyedTrie#every(KeyedValidator...)}
+     * 
+     * @param <V>       the type of the values in the list to validate
+     * @param <T>       the type of the list
+     * @param <E>       the type of errors returned by the validator
+     * @param validator the validator to apply to all elements of a list
+     * @param reducer   a function reducing a List<KeyedValidator<T, E>> to a
+     *                  KeyedValidator<T, E>
+     * 
+     * @return a valid trie if the given validator succeeded. A trie containing the
+     *         collected errors otherwise.
+     */
+    public static <V, T extends List<V>, E> KeyedValidator<T, E> list(
+            KeyedValidator<V, E> validator,
+            Function<List<KeyedValidator<T, E>>, KeyedValidator<T, E>> reducer) {
+        return t -> {
+            List<KeyedValidator<T, E>> validators = IntStream
+                    .range(0, t.size())
+                    .mapToObj(i -> keyed(String.valueOf(i), (T xs) -> validator.apply(xs.get(i))))
+                    .toList();
+            return reducer.apply(validators).apply(t);
         };
     }
 
