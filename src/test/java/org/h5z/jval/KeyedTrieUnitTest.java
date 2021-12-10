@@ -1,17 +1,23 @@
 package org.h5z.jval;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.h5z.jval.KeyedTrie.every;
+import static org.h5z.jval.KeyedTrie.keyed;
+import static org.h5z.jval.KeyedTrie.list;
+import static org.h5z.jval.KeyedTrie.prop;
+import static org.h5z.jval.KeyedTrie.sequentially;
+import static org.h5z.jval.TreeModule.trie;
+import static org.h5z.jval.Validators.gt;
+import static org.organicdesign.fp.StaticImports.map;
+import static org.organicdesign.fp.StaticImports.tup;
+import static org.organicdesign.fp.StaticImports.vec;
+
 import org.h5z.jval.Core.Validator;
 import org.h5z.jval.KeyedTrie.KeyedValidator;
 import org.h5z.jval.TreeModule.Trie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import static org.h5z.jval.TreeModule.*;
-import static org.h5z.jval.Validators.*;
-import static org.h5z.jval.KeyedTrie.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.organicdesign.fp.StaticImports.*;
 
 public class KeyedTrieUnitTest {
 
@@ -34,10 +40,8 @@ public class KeyedTrieUnitTest {
                 Trie<String> validated = keyedContainsA.validate("");
 
                 assertThat(validated)
-                        .isEqualTo(
-                                trie(vec(),
-                                        map(tup("x", trie(vec("Does not contains a"),
-                                                map())))));
+                        .isEqualTo(trie(vec(), map(
+                            tup("x", trie(vec("Does not contains a"), map())))));
             }
 
         }
@@ -53,12 +57,9 @@ public class KeyedTrieUnitTest {
                 Trie<String> validated = yxContainsA.validate("");
 
                 assertThat(validated)
-                        .isEqualTo(
-                                trie(vec(),
-                                        map(tup("y",
-                                                trie(vec(),
-                                                        map(tup("x",
-                                                                trie(vec("Does not contains a"), map()))))))));
+                        .isEqualTo(trie(vec(), map(
+                                    tup("y", trie(vec(), map(
+                                        tup("x", trie(vec("Does not contains a"), map()))))))));
             }
 
         }
@@ -188,6 +189,38 @@ public class KeyedTrieUnitTest {
             public int getY() {
                 return this.y;
             }
+        }
+
+    }
+
+    @Nested
+    @DisplayName("list")
+    class List {
+
+        @Test
+        @DisplayName("Retuns a valid trie if all the elements in the list are valid") void t0() {
+            var listValidator = list(gt(0, () -> "Should be gt 0"));
+            assertThat(listValidator.apply(vec(1, 2, 3, 4, 5)))
+                .isEqualTo(trie(vec(), map(
+                    tup("0", trie(vec(), map())),
+                    tup("1", trie(vec(), map())),
+                    tup("2", trie(vec(), map())),
+                    tup("3", trie(vec(), map())),
+                    tup("4", trie(vec(), map()))
+                )));
+        }
+
+        @Test
+        @DisplayName("Return a trie with the errors of all failed validators") void t1() {
+            var listValidator = list(gt(0, () -> "Should be gt 0"));
+            assertThat(listValidator.apply(vec(0, 0, 0, 0, 0)))
+                .isEqualTo(trie(vec(), map(
+                    tup("0", trie(vec("Should be gt 0"), map())),
+                    tup("1", trie(vec("Should be gt 0"), map())),
+                    tup("2", trie(vec("Should be gt 0"), map())),
+                    tup("3", trie(vec("Should be gt 0"), map())),
+                    tup("4", trie(vec("Should be gt 0"), map()))
+                )));
         }
 
     }

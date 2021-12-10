@@ -12,6 +12,7 @@ import static org.organicdesign.fp.StaticImports.xformArray;
 
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 import org.h5z.jval.Core.Validator;
 import org.h5z.jval.TreeModule.Trie;
@@ -142,31 +143,67 @@ public final class KeyedTrie {
      * @param <T>        the type of values validated
      * @param <E>        the type of errors returned by the validator
      * @param validators the sequence of validator to evaluate
+     * 
      * @return a valid trie if all validators succeeded. A trie with the errors of
      *         all failed validators otherwise.
      */
     public static <K, E> KeyedValidator<K, E> every(KeyedValidator<K, E>... validators) {
-        return v -> vec(validators)
+        return every(vec(validators));
+    }
+
+    /**
+     * @see {@link KeyedTrie#every(KeyedValidator...)}
+     */
+    public static <K, E> KeyedValidator<K, E> every(List<KeyedValidator<K, E>> validators) {
+        return v -> xform(validators)
                 .map(fn -> fn.apply(v))
                 .fold(trie(vec(), map()), TreeModule::merge);
     }
 
     /**
      * <b>Combinator</b> - Creates a validator that will first extract the value to
-     * validate by calling the given fn on the provided value and then pass it to the
+     * validate by calling the given fn on the provided value and then pass it to
+     * the
      * given validator.
      * 
-     * @param <O>        the type of object accepted by the given fn
-     * @param <T>        the type of values validated
-     * @param <E>        the type of errors returned by the validator
-     * @param fn         a function returning an instance of type T given an instance of type O
-     * @param validator  the validator to apply on the extracted value
+     * @param <O>       the type of object accepted by the given fn
+     * @param <T>       the type of values validated
+     * @param <E>       the type of errors returned by the validator
+     * @param fn        a function returning an instance of type T given an instance
+     *                  of type O
+     * @param validator the validator to apply on the extracted value
      * 
-     * @return an trie if the given validator succeeded. A trie containing the
+     * @return a valid trie if the given validator succeeded. A trie containing the
      *         collected errors otherwise.
      */
     public static <O, T, E> KeyedValidator<O, E> prop(Function<O, T> fn, KeyedValidator<T, E> validator) {
         return x -> validator.apply(fn.apply(x));
+    }
+
+    /**
+     * <b>Combinator</b> - Creates a validator that will validate all the elements
+     * of a list with the given validator. The validator will validates all the
+     * elements of the list and return the collected errors.
+     * It has the same behavior than {@link KeyedTrie#every(KeyedValidator...)}
+     * 
+     * @see {@link KeyedTrie#every(KeyedValidator...)}
+     * 
+     * @param <V>       the type of the values in the list to validate
+     * @param <T>       the type of the list
+     * @param <E>       the type of errors returned by the validator
+     * @param validator the validator to apply to all elements of a list
+     * 
+     * @return a valid trie if the given validator succeeded. A trie containing the
+     *         collected errors otherwise.
+     */
+    public static <V, T extends List<V>, E> KeyedValidator<T, E> list(Validator<V, E> validator) {
+        return t -> {
+            List<KeyedValidator<T, E>> validators = IntStream
+                    .range(0, t.size())
+                    .mapToObj(i -> keyed(String.valueOf(i), (T xs) -> validator.apply(xs.get(i))))
+                    .toList();
+            return every(validators).apply(t);
+        };
     }
 
 }
