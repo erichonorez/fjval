@@ -23,7 +23,7 @@ public class ValidatorsUnitTest {
         @Test
         @DisplayName("Should fail if the value is null")
         public void test() {
-            List<String> result = notNull(() -> "Required").apply(null);
+            List<String> result = required(() -> "Required").apply(null);
 
             assertAll(
                 () -> assertThat(isInvalid(result)).isTrue(),
