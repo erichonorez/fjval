@@ -1,31 +1,30 @@
 package org.h5z.jval;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.h5z.jval.KeyedTrie.every;
-import static org.h5z.jval.KeyedTrie.keyed;
-import static org.h5z.jval.KeyedTrie.list;
-import static org.h5z.jval.KeyedTrie.prop;
-import static org.h5z.jval.KeyedTrie.sequentially;
-import static org.h5z.jval.KeyedTrie.required;
-import static org.h5z.jval.KeyedTrie.optional;
-import static org.h5z.jval.TreeModule.trie;
+import static org.h5z.jval.Keyed.every;
+import static org.h5z.jval.Keyed.keyed;
+import static org.h5z.jval.Keyed.list;
+import static org.h5z.jval.Keyed.prop;
+import static org.h5z.jval.Keyed.sequentially;
+import static org.h5z.jval.Keyed.required;
+import static org.h5z.jval.Keyed.optional;
+import static org.h5z.jval.Trie.trie;
 import static org.h5z.jval.Validators.gt;
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 
 import org.h5z.jval.Core.Validator;
-import org.h5z.jval.KeyedTrie.KeyedValidator;
-import org.h5z.jval.TreeModule.Trie;
+import org.h5z.jval.Keyed.KeyedValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-public class KeyedTrieUnitTest {
+public class KeyedUnitTest {
 
     @Nested
     @DisplayName("keyed")
-    class Keyed {
+    class KeyedTest { // named KeyedTest to avoid collision with the class Keyed
 
         Validator<String, String> containsA = s -> s.contains("a")
                 ? Core.valid(s)
@@ -206,7 +205,8 @@ public class KeyedTrieUnitTest {
             @Test
             @DisplayName("Retuns a valid trie if all the elements in the list are valid")
             void t0() {
-                var listValidator = list(gt(0, () -> "Should be gt 0"), KeyedTrie::every);
+                
+                var listValidator = list(gt(0, () -> "Should be gt 0"), Keyed::every);
                 assertThat(listValidator.apply(vec(1, 2, 3, 4, 5)))
                         .isEqualTo(trie(vec(), map(
                                 tup("0", trie(vec(), map())),
@@ -219,7 +219,7 @@ public class KeyedTrieUnitTest {
             @Test
             @DisplayName("Return a trie with the errors of all failed validators")
             void t1() {
-                var listValidator = list(gt(0, () -> "Should be gt 0"), KeyedTrie::every);
+                var listValidator = list(gt(0, () -> "Should be gt 0"), Keyed::every);
                 assertThat(listValidator.apply(vec(0, 0, 0, 0, 0)))
                         .isEqualTo(trie(vec(), map(
                                 tup("0", trie(vec("Should be gt 0"), map())),
@@ -237,7 +237,7 @@ public class KeyedTrieUnitTest {
 
             Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
             KeyedValidator<Point, String> pointValidator = keyed("x", Core.prop(Point::getX, xValidator));
-            KeyedValidator<java.util.List<Point>, String> listOfPointValidator = list(pointValidator, KeyedTrie::every);
+            KeyedValidator<java.util.List<Point>, String> listOfPointValidator = list(pointValidator, Keyed::every);
 
             @Test
             @DisplayName("Retuns a valid trie if all the elements in the list are valid")

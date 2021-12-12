@@ -1,19 +1,13 @@
 package org.h5z.jval;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.h5z.jval.TreeModule.get;
-import static org.h5z.jval.TreeModule.isValid;
-import static org.h5z.jval.TreeModule.merge;
-import static org.h5z.jval.TreeModule.toMap;
-import static org.h5z.jval.TreeModule.trie;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
+import static org.h5z.jval.Trie.trie;
 
 import java.util.List;
-
-import org.h5z.jval.TreeModule.Trie;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
@@ -41,7 +35,7 @@ public class TrieUnitTest {
                             vec(), // no error for "x"
                             map())))); // no child
 
-            assertThat(isValid(validation)).isTrue();
+            assertThat(validation.isValid()).isTrue();
         }
 
         @Test
@@ -53,7 +47,7 @@ public class TrieUnitTest {
                             vec(), // no error for x
                             map())))); // no child
 
-            assertThat(isValid(validation)).isFalse();
+            assertThat(validation.isValid()).isFalse();
         }
 
         @Test
@@ -67,7 +61,7 @@ public class TrieUnitTest {
                                     vec("This is an error"), // an error for x.y
                                     map()))))))); // no child
 
-            assertThat(isValid(validation)).isFalse();
+            assertThat(validation.isValid()).isFalse();
         }
 
     }
@@ -101,7 +95,7 @@ public class TrieUnitTest {
                     vec(),
                     map()));
 
-            assertThat(get(vec("y", "2"), root)).isEqualTo(expected);
+            assertThat(root.get(vec("y", "2"))).isEqualTo(expected);
         }
 
         @Test
@@ -112,7 +106,7 @@ public class TrieUnitTest {
                     map(tup("x", trie(
                             vec(), map()))));
 
-            assertThat(get(vec("x", "y"), root)).isEqualTo(Option.none());
+            assertThat(root.get(vec("x", "y"))).isEqualTo(Option.none());
 
         }
 
@@ -177,7 +171,7 @@ public class TrieUnitTest {
                 Trie<String> b = tc._2()._2();
                 Trie<String> expected = tc._2()._3();
 
-                return dynamicTest(label, () -> assertThat(merge(a, b)).isEqualTo(expected));
+                return dynamicTest(label, () -> assertThat(a.merge(b)).isEqualTo(expected));
             }).toImList();
         }
 
@@ -229,7 +223,7 @@ public class TrieUnitTest {
                 Trie<String> trie = tc._2();
                 ImMap<String, ImList<String>> expected = tc._3();
 
-                return dynamicTest(label, () -> assertThat(toMap(trie).equals(expected)).isTrue());
+                return dynamicTest(label, () -> assertThat(trie.toMap().equals(expected)).isTrue());
             }).toImList();
         }
 
