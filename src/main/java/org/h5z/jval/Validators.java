@@ -67,7 +67,7 @@ public final class Validators {
         };
     }
 
-    public static <T, E> Validator<T, E> notNull(Supplier<E> supplier) {
+    public static <T, E> Validator<T, E> required(Supplier<E> supplier) {
         return v -> {
             if (null != v) {
                 return valid(v);

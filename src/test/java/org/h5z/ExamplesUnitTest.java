@@ -11,10 +11,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import lombok.Value;
+
 public class ExamplesUnitTest {
 
     @Nested
-    @DisplayName("Example of how to validate value")
+    @DisplayName("Example of how to validate values")
     class SimpleValue {
 
         // We want to create a validator for a username
@@ -103,7 +105,7 @@ public class ExamplesUnitTest {
                             prop(SignUpForm::lastName, optional(lastNameValidator)), // last name may be null
                             prop(SignUpForm::userName, required(usernameValidator, () -> "A username is mandatory")),
                             prop(SignUpForm::password, required(passwordValidator, () -> "A password is mandatory")),
-                            prop(SignUpForm::passwordConfirmation, notNull(() -> "Confirm your password"))),
+                            prop(SignUpForm::passwordConfirmation, required(() -> "Confirm your password"))),
                     passwordsMatchValidator // then if previous validors succeeded then validate that both passwords
                                             // match
             );
@@ -128,6 +130,177 @@ public class ExamplesUnitTest {
                             .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "P4ssW0rd!42")))
                                     .matches(Core::isValid));
 
+        }
+
+
+        // let's define some typed error for our SignUpForm validation
+        static interface ValidationError {
+            String getMessage();
+        }
+
+        static interface SignUpFormError extends ValidationError { }
+
+        @Value
+        static class FirstNameLengthError implements SignUpFormError {
+
+            private static final String MSG = "The length must be between 2 and 42";
+
+            @Override
+            public String getMessage() { return MSG; }
+
+        }
+
+        @Value
+        static class LastNameLengthError implements SignUpFormError {
+
+            private static final String MSG = "The length must be between 2 and 42";
+
+            @Override
+            public String getMessage() { return MSG; }
+
+        }
+
+        @Value
+        static class PasswordComplexityError implements SignUpFormError {
+
+            private static final String MSG = "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)";
+
+            @Override
+            public String getMessage() { return MSG; }
+            
+        }
+
+        @Value
+        static class PasswordLengthError implements SignUpFormError {
+
+            private static final String MSG = "The length must be between 8 and 42";
+
+            @Override
+             public String getMessage() { return MSG; }
+        }
+
+        @Value
+        static class UserNameComplexityError implements SignUpFormError {
+
+            private static final String MSG = "It must only contain alphanumeric characters and '_'";
+
+            @Override
+            public String getMessage() { return MSG; }
+
+        }
+
+        @Value
+        static class UserNameLengthError implements SignUpFormError {
+
+            private static final String MSG = "The length must be between 3 and 16";
+
+            @Override
+            public String getMessage() { return MSG; }
+             
+        }
+
+        @Value
+        static class PasswordsDontMatchError implements SignUpFormError {
+
+            private static final String MSG = "Passwords must match";
+
+            @Override
+            public String getMessage() { return MSG; }
+
+        }
+
+        @Value
+        static class UserNameRequiredError implements SignUpFormError {
+                
+                @Override
+                public String getMessage() {
+                        return "A username is mandatory";
+                }
+
+        }
+
+        @Value
+        static class PasswordRequiredError implements SignUpFormError {
+                
+                @Override
+                public String getMessage() {
+                        return "A password is mandatory";
+                }
+
+        }
+
+        @Value
+        static class ConfirmedPasswordRequiredError implements SignUpFormError {
+                
+                @Override
+                public String getMessage() {
+                        return "Confirm your password";
+                }
+
+        }
+
+        @Test
+        @DisplayName("With typed errors")
+        void example3() {
+            Validator<SignUpForm, ValidationError> formValidator = 
+                sequentially(
+                        // The properties are all validated first
+                        every(
+                                // The firstName property is optional
+                                // If present the length should be between 3 and 42
+                                prop(SignUpForm::firstName, optional(
+                                        hasLengthBetween(3, 42, () -> new FirstNameLengthError()))),
+
+                                // The lastName property is optional
+                                // If present the length should be between 3 and 42
+                                prop(SignUpForm::lastName, optional(
+                                        hasLengthBetween(3, 42, () -> new LastNameLengthError()))),
+
+                                // The userName property is required
+                                // It must contains only alphanumeric characters
+                                // It must have a length between 3 and 16
+                                prop(SignUpForm::userName, required(
+                                        every(
+                                            matches("^[\\w]+$", () -> new UserNameComplexityError()),
+                                            hasLengthBetween(3, 16, () -> new UserNameLengthError())
+                                        ), () -> new UserNameRequiredError())),
+
+                                // The password property is required
+                                // It must contains upper case and lower case letter, numbers and special characters
+                                prop(SignUpForm::password, required(
+                                        sequentially(
+                                            matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
+                                                () -> new PasswordComplexityError()),
+                                            hasLengthBetween(8, 42, () -> new PasswordLengthError())
+                                        ), () -> new PasswordRequiredError())),
+
+                                // The passwordConfirmation property is required
+                                prop(SignUpForm::passwordConfirmation, required(() -> new ConfirmedPasswordRequiredError()))
+                        ),
+                        // If the properties are valid then apply cross properties validations
+                        cond( // If the passwords don't match then return an error
+                                form -> form.password().equals(form.passwordConfirmation()),
+                                () -> new PasswordsDontMatchError())
+                );
+
+            assertAll(
+                    () -> assertThat(formValidator.validate(new SignUpForm(null, null, null, null, null)))
+                            .containsExactly(
+                                    new UserNameRequiredError(),
+                                    new PasswordRequiredError(),
+                                    new ConfirmedPasswordRequiredError()),
+
+                    () -> assertThat(
+                            formValidator.validate(new SignUpForm("", "Doe", "username", "P4ssW0rd!42", "P4ssW0rd!42")))
+                                    .containsExactly(new FirstNameLengthError()),
+
+                    () -> assertThat(formValidator
+                            .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "password")))
+                                    .containsExactly(new PasswordsDontMatchError()),
+
+                    () -> assertThat(formValidator
+                            .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "P4ssW0rd!42")))
+                                    .matches(Core::isValid));
         }
 
     }
