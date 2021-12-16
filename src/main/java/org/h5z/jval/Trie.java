@@ -5,6 +5,7 @@ import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 import static org.organicdesign.fp.StaticImports.xform;
 
+import java.util.Arrays;
 import java.util.List;
 
 import org.organicdesign.fp.collections.ImList;
@@ -24,6 +25,16 @@ public class Trie<E> {
 
     public ImList<E> getErrors() {
         return this.errors;
+    }
+
+    public ImList<E> getErrors(List<String> path) {
+        return this.get(path)
+            .match(n -> n.getErrors(),
+                   () -> vec());
+    }
+
+    public ImList<E> getErrors(String... path) {
+        return this.getErrors(Arrays.asList(path));
     }
 
     public ImMap<String, Trie<E>> getChildren() {
@@ -72,8 +83,12 @@ public class Trie<E> {
     public boolean hasErrors(List<String> path) {
         return this.get(path)
                 .match(
-                        el -> el.getErrors().isEmpty(),
+                        el -> !el.getErrors().isEmpty(),
                         () -> false);
+    }
+
+    public boolean hasErrors(String... path) {
+        return this.hasErrors(Arrays.asList(path));
     }
 
     /**
