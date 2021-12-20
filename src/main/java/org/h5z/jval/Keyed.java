@@ -77,6 +77,31 @@ public final class Keyed {
     }
 
     /**
+     * Creates a {@link KeyedValidator} reporting the errors of the supplied {@link Validator} at the root of the trie.
+     * 
+     * @param <T>   the type of value being validated
+     * @param <E>   type type of error returned by the validator
+     * @param validator the validator to execute
+     * @return          a keyed validator.
+     */
+    public static <T, E> KeyedValidator<T, E> globally(Validator<T, E> validator) { 
+        return keyed(Trie.ROOT_KEY, validator);
+    }
+
+    /**
+     * Creates a {@link KeyedValidator} reporting the errors of the supplied {@link KeyedValidator} at the root of the trie.
+     * 
+     * 
+     * @param <T>   the type of value being validated
+     * @param <E>   type type of error returned by the validator
+     * @param validator the validator to execute
+     * @return          a keyed validator.
+     */
+    public static <T, E> KeyedValidator<T, E> globally(KeyedValidator<T, E> validator) { 
+        return keyed(Trie.ROOT_KEY, validator);
+    }
+
+    /**
      * <b>Combinator</b> - Creates a validator that will execute sequentially the
      * given validators and return the errors of the first failed validator. The
      * execution of the validators stops at the first failed validators (fail-fast).

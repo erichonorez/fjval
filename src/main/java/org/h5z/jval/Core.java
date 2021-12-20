@@ -193,6 +193,97 @@ public final class Core {
     public static <O, T, E> Validator<O, E> prop(Function<O, T> fn, Validator<T, E> validator) {
         return obj -> validator.apply(fn.apply(obj));
     }
+    
+    /**
+     * Creates a validator for the mandatory value retrieved by calling fn.
+     * 
+     * If the value is absent (is equal to <code>null</code>) it returns the supplied error. Otherwise it execute 
+     * the given validator and return its errors.
+     * 
+     * Example:
+     * 
+     * <pre>
+     * required(MyDto::getX, someValidator, () -> new Error()))
+     * </pre>
+     * 
+     * The code above is equivalent to :
+     * 
+     * <pre>
+     * prop(MyDto::getX, required(someValidator, () -> new Error()))
+     * </pre>
+     * 
+     * @param <O>   the type of object accepted by the given fn
+     * @param <T>   the type of value being validated
+     * @param <E>   type type of error returned by the validator
+     * @param fn    the function extracting the value to validate from an instance of `O`
+     * @param validator the validator to execute if the value to validate is not `null`
+     * @param errorFn   the error to return in case of the value to validate is `null`
+     * @return          If the value is absent (is equal to <code>null</code>) it returns the supplied error. 
+     *                  Otherwise it execute the given validator and return its errors.
+     */
+    public static <O, T, E> Validator<O, E> required(Function<O, T> fn, Validator<T, E> validator, Supplier<E> errorFn) {
+        return prop(fn, required(validator, errorFn));
+    }
+
+    /**
+     * Creates a validator for the mandatory value retrieved by calling fn.
+     * 
+     * If the value is absent (is equal to <code>null</code>) it returns the supplied error. Otherwise it returns
+     * a valid validation result.
+     * 
+     * Example:
+     * 
+     * <pre>
+     * required(MyDto::getX, () -> new Error()))
+     * </pre>
+     * 
+     * The code above is equivalent to :
+     * 
+     * <pre>
+     * prop(MyDto::getX,  required(() -> new Error()))
+     * </pre>
+     * 
+     * @param <O>   the type of object accepted by the given fn
+     * @param <T>   the type of value being validated
+     * @param <E>   type type of error returned by the validator
+     * @param fn    the function extracting the value to validate from an instance of `O`
+     * @param errorFn   the error to return in case of the value to validate is `null`
+     * @return          If the value is absent (is equal to <code>null</code>) it returns the supplied error. 
+     *                  Otherwise it returns a valid validation result.
+     */
+    public static <O, T, E> Validator<O, E> required(Function<O, T> fn, Supplier<E> errorFn) {
+        return prop(fn, Validators.required(errorFn));
+    }
+
+    /**
+     * Creates a validator for the optional value retrived by calling fn.
+     * 
+     * If the value is absent (is equal to <code>null</code>) it returns a valid validation result. 
+     * Otherwise it execute the given validator and return its errors.
+     * 
+     * Example:
+     * 
+     * <pre>
+     * optional(MyDto::getX, someValidator))
+     * </pre>
+     * 
+     * The code above is equivalent to :
+     * 
+     * <pre>
+     * prop(MyDto::getX, optional(someValidator))
+     * </pre>
+     * 
+     * @param <O>   the type of object accepted by the given fn
+     * @param <T>   the type of value being validated
+     * @param <E>   type type of error returned by the validator
+     * @param fn    the function extracting the value to validate from an instance of `O`
+     * @param validator the validator to execute if the value to validate is not `null`
+     * @return          If the value is absent (is equal to <code>null</code>) it returns a valid validation result. 
+     *                  Otherwise it execute the given validator and return its errors.
+     */
+    public static <O, T, E> Validator<O, E> optional(Function<O, T> fn, Validator<T, E> validator) {
+        return prop(fn, optional(validator));
+    }
 
     /**
      * Creates a validator that will return the negation of the given validator. If the given validator returns a valid

@@ -1,18 +1,15 @@
 package org.h5z.jval;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.h5z.jval.Core.isInvalid;
+import static org.h5z.jval.Validators.required;
+import static org.junit.jupiter.api.Assertions.assertAll;
+
+import java.util.List;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.h5z.jval.Core.isInvalid;
-import static org.h5z.jval.Validators.*;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
-import org.h5z.jval.Core.Validator;
-
-import java.util.List;
 
 public class ValidatorsUnitTest {
 

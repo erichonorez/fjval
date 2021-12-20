@@ -15,6 +15,9 @@ import org.organicdesign.fp.function.Fn1;
 import org.organicdesign.fp.oneOf.Option;
 
 public class Trie<E> {
+
+    static final String ROOT_KEY = "";
+    
     final ImList<E> errors;
     final ImMap<String, Trie<E>> children;
 
@@ -77,7 +80,7 @@ public class Trie<E> {
     }
 
     public boolean hasErrors() {
-        return this.getErrors().isEmpty();
+        return !this.getErrors().isEmpty();
     }
 
     public boolean hasErrors(List<String> path) {
@@ -212,6 +215,9 @@ public class Trie<E> {
     }
 
     public static <E, T> Trie<E> valid(String key, T v) {
+        if (ROOT_KEY.equals(key)) {
+            return Trie.valid(v);
+        }
         return trie(vec(), map(tup(key, Trie.valid(v))));
     }
 
@@ -220,6 +226,9 @@ public class Trie<E> {
     }
 
     public static <E> Trie<E> invalid(String key, ImList<E> es) {
+        if (ROOT_KEY.equals(key)) {
+            return Trie.invalid(es);
+        }
         return trie(vec(), map(tup(key, Trie.invalid(es))));
     }
 

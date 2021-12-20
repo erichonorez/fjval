@@ -273,7 +273,7 @@ public class ExamplesUnitTest {
             Trie<String> result = userNameKValidator.validate("");
 
             assertAll(
-                () -> assertThat(result.hasErrors()).isTrue(),
+                () -> assertThat(result.isInvalid()).isTrue(),
 
                 () -> assertThat(result.hasErrors("userName")).isTrue(),
 
@@ -290,58 +290,43 @@ public class ExamplesUnitTest {
             KeyedValidator<SignUpForm, SignUpFormError> formValidator = sequentially(
                 every(
                     keyed("firstName", 
-                        prop(SignUpForm::firstName, 
-                            optional(
-                                hasLengthBetween(3, 42, () -> new FirstNameLengthError()))
-                            )
-                    ),
+                        optional(SignUpForm::firstName, 
+                            hasLengthBetween(3, 42, () -> new FirstNameLengthError()))),
 
                     keyed("lastName",
-                        prop(SignUpForm::lastName, 
-                            optional(
-                                hasLengthBetween(3, 42, () -> new LastNameLengthError()))
-                            )
-                    ),
+                        optional(SignUpForm::lastName, 
+                            hasLengthBetween(3, 42, () -> new LastNameLengthError()))),
 
                     keyed("userName",
-                        prop(SignUpForm::userName, 
-                            required(
+                        required(SignUpForm::userName, 
                                 every(
                                     matches("^[\\w]+$", () -> new UserNameComplexityError()),
                                     hasLengthBetween(3, 16, () -> new UserNameLengthError())
                                 ), 
-                                () -> new UserNameRequiredError())
-                            )
-                    ),
+                                () -> new UserNameRequiredError())),
 
                     keyed("password",
-                        prop(SignUpForm::password, 
-                            required(
+                        required(SignUpForm::password, 
                                 sequentially(
                                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                         () -> new PasswordComplexityError()),
                                     hasLengthBetween(8, 42, () -> new PasswordLengthError())
                                 ), 
-                                () -> new PasswordRequiredError())
-                            )
-                        ),
+                                () -> new PasswordRequiredError())),
 
                     keyed("passwordConfirmation",
-                        prop(SignUpForm::passwordConfirmation, 
-                            required(() -> new ConfirmedPasswordRequiredError())))
-                ),
+                        required(SignUpForm::passwordConfirmation,
+                            () -> new ConfirmedPasswordRequiredError()))),
 
-                keyed("",
+                globally(
                     cond(
                         form -> form.password().equals(form.passwordConfirmation()),
-                        () -> new PasswordsDontMatchError())
-                )
-            );
+                        () -> new PasswordsDontMatchError())));
 
             Trie<SignUpFormError> result = formValidator.validate(new SignUpForm(null, null, null, null, null));
 
             assertAll(
-                () -> assertThat(result.hasErrors())
+                () -> assertThat(result.isInvalid())
                             .isTrue(),
 
                 () -> assertThat(result.hasErrors("firstName"))
@@ -359,7 +344,7 @@ public class ExamplesUnitTest {
                             .isTrue(),
                 () -> assertThat(result.getErrors("password"))
                             .containsExactly(new PasswordRequiredError()),
-                            
+
                 () -> assertThat(result.hasErrors("passwordConfirmation"))
                             .isTrue());
         }

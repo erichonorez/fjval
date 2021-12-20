@@ -1,19 +1,16 @@
 package org.h5z.jval;
 
+import static org.h5z.jval.Core.invalid;
+import static org.h5z.jval.Core.sequentially;
+import static org.h5z.jval.Core.valid;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-import org.h5z.jval.Core.*;
-
-import fj.data.vector.V;
-
-import static org.h5z.jval.Core.*;
+import org.h5z.jval.Core.Validator;
 
 public final class Validators {
 
