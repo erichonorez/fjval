@@ -273,6 +273,110 @@ public final class Keyed {
     }
 
     /**
+     * Creates a {@link KeyedValidator} by composing the given validator with 
+     * {@link Core#required(Function, Supplier)}.
+     * 
+     * @param <O>       the type of object accepted by the given fn
+     * @param <T>       the type of values validated
+     * @param <E>       the type of errors returned by the validator
+     * @param key       the key to index the result of the validator
+     * @param fn        the function extracting the value to validate from an instance of `O`
+     * @param validator the validator to apply on the extracted value
+     * @param lazyE     the error to return if the value is <code>null</code>
+     * @return          a {@link KeyedValidator} that return the given error if the extracted value <code>T</code>
+     *                  from <code>O</code> is null. Return the result of the given validator otherwise.
+     */
+    public static <O, T, E> KeyedValidator<O, E> required(String key, 
+                                                          Function<O, T> fn, 
+                                                          Validator<T, E> validator, 
+                                                          Supplier<E> lazyE) {
+        return keyed(key, Core.prop(fn, Core.required(validator, lazyE)));
+    }
+
+    /**
+     * Creates a {@link KeyedValidator} by composing the given validator with 
+     * {@link Core#required(Function, Supplier)}.
+     * 
+     * @param <O>       the type of object accepted by the given fn
+     * @param <T>       the type of values validated
+     * @param <E>       the type of errors returned by the validator
+     * @param key       the key to index the result of the validator
+     * @param fn        the function extracting the value to validate from an instance of `O`
+     * @param validator the validator to apply on the extracted value
+     * @param lazyE     the error to return if the value is <code>null</code>
+     * @return          a {@link KeyedValidator} that returns the given error if the extracted value <code>T</code>
+     *                  from <code>O</code> is null. Returns the result of the given validator otherwise.
+     */
+    public static <O, T, E> KeyedValidator<O, E> required(String key, 
+                                                          Function<O, T> fn, 
+                                                          KeyedValidator<T, E> validator, 
+                                                          Supplier<E> lazyE) {
+        return keyed(key, prop(fn, required(validator, lazyE)));
+    }
+
+    /**
+     * Creates a {@link KeyedValidator} that return the given error if the value being validated is <code>null</code>. 
+     * 
+     * @param <O>       the type of object accepted by the given fn
+     * @param <T>       the type of values validated
+     * @param <E>       the type of errors returned by the validator
+     * @param key       the key to index the result of the validator
+     * @param fn        the function extracting the value to validate from an instance of `O`
+     * @param lazyE     the error to return if the value is <code>null</code>
+     * @return          a {@link KeyedValidator} that returns the given error if the extracted value <code>T</code>
+     *                  from <code>O</code> is null. Returns the result of the given validator otherwise.
+     */
+    public static <O, T, E> KeyedValidator<O, E> required(String key, 
+                                                          Function<O, T> fn, 
+                                                          Supplier<E> lazyE) {
+        return keyed(key, Core.required(fn, lazyE));
+    }
+
+    /**
+     * Creates a {@link KeyedValidator} by composing the given validator with 
+     * {@link Core#optional(Function, Supplier)}.
+     * 
+     * @param <O>       the type of object accepted by the given fn
+     * @param <T>       the type of values validated
+     * @param <E>       the type of errors returned by the validator
+     * @param key       the key to index the result of the validator
+     * @param fn        the function extracting the value to validate from an instance of `O`
+     * @param validator the validator to apply on the extracted value
+     * @param lazyE     the error to return if the value is <code>null</code>
+     * @return          a {@link KeyedValidator} that returns the given a valid result if the extracted 
+     *                  value <code>T</code> from <code>O</code> is null.
+     *                  Returns the result of the given validator otherwise.
+     */
+    public static <O, T, E> KeyedValidator<O, E> optional(String key, 
+                                                          Function<O, T> fn, 
+                                                          Validator<T, E> validator) {
+        return keyed(key, Core.prop(fn, Core.optional(validator)));
+
+    }
+
+    /**
+     * Creates a {@link KeyedValidator} by composing the given validator with 
+     * {@link Core#optional(Function, Supplier)}.
+     * 
+     * @param <O>       the type of object accepted by the given fn
+     * @param <T>       the type of values validated
+     * @param <E>       the type of errors returned by the validator
+     * @param key       the key to index the result of the validator
+     * @param fn        the function extracting the value to validate from an instance of `O`
+     * @param validator the validator to apply on the extracted value
+     * @param lazyE     the error to return if the value is <code>null</code>
+     * @return          a {@link KeyedValidator} that returns the given a valid result if the extracted 
+     *                  value <code>T</code> from <code>O</code> is null.
+     *                  Returns the result of the given validator otherwise.
+     */
+    public static <O, T, E> KeyedValidator<O, E> optional(String key, 
+                                                          Function<O, T> fn, 
+                                                          KeyedValidator<T, E> validator) {
+        return keyed(key, prop(fn, optional(validator)));
+
+    }
+
+    /**
      * Creates a validator that will apply the given validator only if the validator
      * value is not null. If the validated value is null it return a valid trie.
      * Otherwise it executes the validator and returns its result.

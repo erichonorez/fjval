@@ -349,6 +349,71 @@ public class ExamplesUnitTest {
                             .isTrue());
         }
 
+        @Test
+        @DisplayName("Sign up form with more concise api")
+        void example2() {
+            KeyedValidator<SignUpForm, SignUpFormError> formValidator = sequentially(
+                every(
+                    optional("firstName", 
+                             SignUpForm::firstName, 
+                             hasLengthBetween(3, 42, () -> new FirstNameLengthError())),
+
+                    optional("lastName",
+                             SignUpForm::lastName, 
+                             hasLengthBetween(3, 42, () -> new LastNameLengthError())),
+
+                    required("userName",
+                             SignUpForm::userName, 
+                             every(
+                                 matches("^[\\w]+$", () -> new UserNameComplexityError()),
+                                 hasLengthBetween(3, 16, () -> new UserNameLengthError())
+                             ), 
+                             () -> new UserNameRequiredError()),
+
+                    required("password",
+                             SignUpForm::password, 
+                            sequentially(
+                                matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
+                                    () -> new PasswordComplexityError()),
+                                hasLengthBetween(8, 42, () -> new PasswordLengthError())
+                            ), 
+                            () -> new PasswordRequiredError()),
+
+                    required("passwordConfirmation",
+                             SignUpForm::passwordConfirmation,
+                             () -> new ConfirmedPasswordRequiredError())),
+
+                globally(
+                    cond(
+                        form -> form.password().equals(form.passwordConfirmation()),
+                        () -> new PasswordsDontMatchError())));
+
+            Trie<SignUpFormError> result = formValidator.validate(new SignUpForm(null, null, null, null, null));
+
+            assertAll(
+                () -> assertThat(result.isInvalid())
+                            .isTrue(),
+
+                () -> assertThat(result.hasErrors("firstName"))
+                            .isFalse(), // firstName is optional
+
+                () -> assertThat(result.hasErrors("lastName"))
+                            .isFalse(), // lastName is false
+
+                () -> assertThat(result.hasErrors("userName"))
+                            .isTrue(),
+                () -> assertThat(result.getErrors("userName"))
+                            .containsExactly(new UserNameRequiredError()),
+
+                () -> assertThat(result.hasErrors("password"))
+                            .isTrue(),
+                () -> assertThat(result.getErrors("password"))
+                            .containsExactly(new PasswordRequiredError()),
+
+                () -> assertThat(result.hasErrors("passwordConfirmation"))
+                            .isTrue());
+        }
+
     }
 
     // types used in the tests above
