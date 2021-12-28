@@ -113,6 +113,7 @@ public final class Keyed {
      * @return a valid trie if all validators succeed. A trie with only the errors
      *         of the first failed validator otherwise.
      */
+    @SafeVarargs
     public static <T, E> KeyedValidator<T, E> sequentially(KeyedValidator<T, E>... validators) {
         return v -> {
             return recurSequentially(v, xformArray(validators).toImList(), trie(vec(), map()));
@@ -153,6 +154,7 @@ public final class Keyed {
      * @return a valid trie if all validators succeeded. A trie with the errors of
      *         all failed validators otherwise.
      */
+    @SafeVarargs
     public static <K, E> KeyedValidator<K, E> every(KeyedValidator<K, E>... validators) {
         return every(vec(validators));
     }

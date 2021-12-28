@@ -82,6 +82,7 @@ public final class Core {
      *
      * @return an empty list if all the validator succeeded. The errors of the first failed validator otherwise.
      */
+    @SafeVarargs
     public static <T, E> Validator<T, E> sequentially(Validator<T, E>... validators) {
         return x -> {
             for (Validator<T, E> v : validators) {
@@ -100,6 +101,7 @@ public final class Core {
      *
      * @return an empty list if all the validator succeeded. The errors of all failed validator otherwise.
      */
+    @SafeVarargs
     public static <T, E> Validator<T, E> every(Validator<T, E>... validators) {
         return x -> Arrays.stream(validators)
             .map(v -> v.apply(x))
@@ -116,6 +118,7 @@ public final class Core {
      *
      * @return an empty list if all the validator succeeded. The errors of all failed validator otherwise.
      */
+    @SafeVarargs
     public static <T, E> Validator<T, E> any(Validator<T, E>... validators) {
         return x -> {
             List<List<E>> vs = Arrays.stream(validators)
@@ -292,14 +295,21 @@ public final class Core {
      * @return an empty list if the given validator fails. A non-empty list containing the error provided by the
      * supplier otherwise.
      */
+    public static <T, E> Validator<T, E> not(Validator<T, E> v, Function<T, E> errorFn) {
+        return x -> isValid(v.apply(x)) 
+                        ? invalid(errorFn.apply(x))
+                        : valid(x);
+    }
+
+    /**
+     * Creates a validator that will return the negation of the given validator. If the given validator returns a valid
+     * result then this validator will return an invalid result with the error provided by the given supplier.
+     *
+     * @return an empty list if the given validator fails. A non-empty list containing the error provided by the
+     * supplier otherwise.
+     */
     public static <T, E> Validator<T, E> not(Validator<T, E> v, Supplier<E> s) {
-        return x -> {
-            List<E> validated = v.apply(x);
-            if (isValid(validated)) {
-                return invalid(s.get());
-            }
-            return valid(x);
-        };
+        return not(v, _v -> s.get());
     }
 
 }

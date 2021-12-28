@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.h5z.jval.Validators.*;
 import static org.h5z.jval.Core.*;
 import static org.h5z.jval.Keyed.*;
+import static org.h5z.jval.DefaultErrors.*;
+import static org.h5z.jval.DefaultErrors.ValidationError.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 import org.h5z.jval.Core.Validator;
@@ -30,7 +32,7 @@ public class ExamplesUnitTest {
             Validator<String, String> usernameValidator = every( // 'every' will execute all the validator even one of
                                                                  // them fails
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
-                    hasLengthBetween(3, 16, () -> "The length must be between 3 and 16"));
+                    lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
             assertAll(
 
@@ -58,7 +60,7 @@ public class ExamplesUnitTest {
                                                                         // and stop at the first failed validator
                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                             () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
-                    hasLengthBetween(8, 42, () -> "The length must be between 8 and 42"));
+                    lengthBetween(8, 42, () -> "The length must be between 8 and 42"));
 
             assertAll(
 
@@ -85,19 +87,19 @@ public class ExamplesUnitTest {
         
                 @Test
                 void example2() {
-                    Validator<String, String> firstNameValidator = hasLengthBetween(3, 42,
+                    Validator<String, String> firstNameValidator = lengthBetween(3, 42,
                             () -> "The length must be between 2 and 42");
                     Validator<String, String> lastNameValidator = firstNameValidator; // Same validation for the first name and
                                                                                     // the last name
 
                     Validator<String, String> usernameValidator = every(
                             matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
-                            hasLengthBetween(3, 16, () -> "The length must be between 3 and 16"));
+                            lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
                     Validator<String, String> passwordValidator = sequentially(
                             matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                     () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
-                            hasLengthBetween(8, 42, () -> "The length must be between 8 and 42"));
+                            lengthBetween(8, 42, () -> "The length must be between 8 and 42"));
 
                     Validator<SignUpForm, String> passwordsMatchValidator = cond(
                             form -> form.password().equals(form.passwordConfirmation()),
@@ -159,14 +161,14 @@ public class ExamplesUnitTest {
                                         // If present the length should be between 3 and 42
                                         prop(SignUpForm::firstName, 
                                             optional(
-                                                hasLengthBetween(3, 42, () -> new FirstNameLengthError()))
+                                                lengthBetween(3, 42, () -> new FirstNameLengthError()))
                                             ),
 
                                         // The lastName property is optional
                                         // If present the length should be between 3 and 42
                                         prop(SignUpForm::lastName, 
                                             optional(
-                                                hasLengthBetween(3, 42, () -> new LastNameLengthError()))
+                                                lengthBetween(3, 42, () -> new LastNameLengthError()))
                                             ),
 
                                         // The userName property is required
@@ -176,7 +178,7 @@ public class ExamplesUnitTest {
                                             required(
                                                 every(
                                                     matches("^[\\w]+$", () -> new UserNameComplexityError()),
-                                                    hasLengthBetween(3, 16, () -> new UserNameLengthError())
+                                                    lengthBetween(3, 16, () -> new UserNameLengthError())
                                                 ), 
                                                 () -> new UserNameRequiredError())
                                             ),
@@ -188,7 +190,7 @@ public class ExamplesUnitTest {
                                                 sequentially(
                                                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                                         () -> new PasswordComplexityError()),
-                                                    hasLengthBetween(8, 42, () -> new PasswordLengthError())
+                                                    lengthBetween(8, 42, () -> new PasswordLengthError())
                                                 ), 
                                                 () -> new PasswordRequiredError())
                                             ),
@@ -266,7 +268,7 @@ public class ExamplesUnitTest {
             // Let's first create a validator for a user name 
             Validator<String, String> usernameValidator = every(
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
-                    hasLengthBetween(3, 16, () -> "The length must be between 3 and 16"));
+                    lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
             // Then we want to index the result of this validator with the key 'userName'
             KeyedValidator<String, String> userNameKValidator = Keyed.keyed("userName", usernameValidator);
@@ -291,17 +293,17 @@ public class ExamplesUnitTest {
                 every(
                     keyed("firstName", 
                         optional(SignUpForm::firstName, 
-                            hasLengthBetween(3, 42, () -> new FirstNameLengthError()))),
+                            lengthBetween(3, 42, () -> new FirstNameLengthError()))),
 
                     keyed("lastName",
                         optional(SignUpForm::lastName, 
-                            hasLengthBetween(3, 42, () -> new LastNameLengthError()))),
+                            lengthBetween(3, 42, () -> new LastNameLengthError()))),
 
                     keyed("userName",
                         required(SignUpForm::userName, 
                                 every(
                                     matches("^[\\w]+$", () -> new UserNameComplexityError()),
-                                    hasLengthBetween(3, 16, () -> new UserNameLengthError())
+                                    lengthBetween(3, 16, () -> new UserNameLengthError())
                                 ), 
                                 () -> new UserNameRequiredError())),
 
@@ -310,7 +312,7 @@ public class ExamplesUnitTest {
                                 sequentially(
                                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                         () -> new PasswordComplexityError()),
-                                    hasLengthBetween(8, 42, () -> new PasswordLengthError())
+                                    lengthBetween(8, 42, () -> new PasswordLengthError())
                                 ), 
                                 () -> new PasswordRequiredError())),
 
@@ -356,17 +358,17 @@ public class ExamplesUnitTest {
                 every(
                     optional("firstName", 
                              SignUpForm::firstName, 
-                             hasLengthBetween(3, 42, () -> new FirstNameLengthError())),
+                             lengthBetween(3, 42, () -> new FirstNameLengthError())),
 
                     optional("lastName",
                              SignUpForm::lastName, 
-                             hasLengthBetween(3, 42, () -> new LastNameLengthError())),
+                             lengthBetween(3, 42, () -> new LastNameLengthError())),
 
                     required("userName",
                              SignUpForm::userName, 
                              every(
                                  matches("^[\\w]+$", () -> new UserNameComplexityError()),
-                                 hasLengthBetween(3, 16, () -> new UserNameLengthError())
+                                 lengthBetween(3, 16, () -> new UserNameLengthError())
                              ), 
                              () -> new UserNameRequiredError()),
 
@@ -375,7 +377,7 @@ public class ExamplesUnitTest {
                             sequentially(
                                 matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                     () -> new PasswordComplexityError()),
-                                hasLengthBetween(8, 42, () -> new PasswordLengthError())
+                                lengthBetween(8, 42, () -> new PasswordLengthError())
                             ), 
                             () -> new PasswordRequiredError()),
 
@@ -414,6 +416,66 @@ public class ExamplesUnitTest {
                             .isTrue());
         }
 
+        @Test
+        @DisplayName("Sign up form with default errors")
+        void example3() {
+            KeyedValidator<SignUpForm, DefaultErrors.ValidationError> formValidator = sequentially(
+                every(
+                    optional("firstName", 
+                             SignUpForm::firstName, 
+                             lengthBetween(3, 42)),
+
+                    optional("lastName",
+                             SignUpForm::lastName, 
+                             lengthBetween(3, 42)),
+
+                    required("userName",
+                             SignUpForm::userName, 
+                             every(
+                                 matches("^[\\w]+$"),
+                                 lengthBetween(3, 16)
+                             )),
+
+                    required("password",
+                             SignUpForm::password, 
+                            sequentially(
+                                matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$"),
+                                lengthBetween(8, 42)
+                            )),
+
+                    required("passwordConfirmation",
+                             SignUpForm::passwordConfirmation)),
+
+                globally(
+                    cond(
+                        form -> form.password().equals(form.passwordConfirmation()),
+                        form -> error("PasswordsDontMatch", form.password(), form.passwordConfirmation()))));
+
+            Trie<DefaultErrors.ValidationError> result = formValidator.validate(new SignUpForm(null, null, null, null, null));
+
+            assertAll(
+                () -> assertThat(result.isInvalid())
+                            .isTrue(),
+
+                () -> assertThat(result.hasErrors("firstName"))
+                            .isFalse(), // firstName is optional
+
+                () -> assertThat(result.hasErrors("lastName"))
+                            .isFalse(), // lastName is false
+
+                () -> assertThat(result.hasErrors("userName"))
+                            .isTrue(),
+                () -> assertThat(result.getErrors("userName"))
+                            .containsExactly(error(DefaultErrors.VALUE_REQUIRED)),
+
+                () -> assertThat(result.hasErrors("password"))
+                            .isTrue(),
+                () -> assertThat(result.getErrors("password"))
+                            .containsExactly(error(DefaultErrors.VALUE_REQUIRED)),
+
+                () -> assertThat(result.hasErrors("passwordConfirmation"))
+                            .isTrue());
+        }
     }
 
     // types used in the tests above
