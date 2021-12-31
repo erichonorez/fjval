@@ -15,14 +15,14 @@ import java.util.stream.IntStream;
 
 import org.organicdesign.fp.collections.ImList;
 
-public final class Keyed {
+public final class Core {
 
-    private Keyed() {
+    private Core() {
         throw new IllegalAccessError("Cannot be instanciated");
     }
 
     @FunctionalInterface
-    public interface KeyedValidator<T, E> extends Function<T, Trie<E>> {
+    public interface Validator<T, E> extends Function<T, Trie<E>> {
 
         /**
          * Alias for {@link Function#apply(Object)}
@@ -34,11 +34,11 @@ public final class Keyed {
     }
 
     /**
-     * Creates a {@link KeyedValidator} given a key and another {@KeyedValidator}.
+     * Creates a {@link Validator} given a key and another {@link Validator}.
      * The given key will be used to access the result of the given valitors in the
      * resulting trie.
      * 
-     * Example: If the result of given {@link KeyedValidator} is keyed on a key 'x'
+     * Example: If the result of given {@link Validator} is keyed on a key 'x'
      * and the given key is 'y' then the result of new validator will be accessible
      * with the key at `x -> y` in the resulting trie.
      * 
@@ -49,12 +49,12 @@ public final class Keyed {
      * 
      * @return
      */
-    public static <T, E> KeyedValidator<T, E> keyed(String key, KeyedValidator<T, E> validator) {
+    public static <T, E> Validator<T, E> keyed(String key, Validator<T, E> validator) {
         return v -> trie(vec(), map(tup(key, validator.apply(v))));
     }
 
     /**
-     * Creates a {@link KeyedValidator} reporting the errors of the supplied {@link KeyedValidator} at the root of the trie.
+     * Creates a {@link Validator} reporting the errors of the supplied {@link Validator} at the root of the trie.
      * 
      * 
      * @param <T>   the type of value being validated
@@ -62,7 +62,7 @@ public final class Keyed {
      * @param validator the validator to execute
      * @return          a keyed validator.
      */
-    public static <T, E> KeyedValidator<T, E> globally(KeyedValidator<T, E> validator) { 
+    public static <T, E> Validator<T, E> globally(Validator<T, E> validator) { 
         return keyed(Trie.ROOT_KEY, validator);
     }
 
@@ -79,13 +79,13 @@ public final class Keyed {
      *         of the first failed validator otherwise.
      */
     @SafeVarargs
-    public static <T, E> KeyedValidator<T, E> sequentially(KeyedValidator<T, E>... validators) {
+    public static <T, E> Validator<T, E> sequentially(Validator<T, E>... validators) {
         return v -> {
             return recurSequentially(v, xformArray(validators).toImList(), trie(vec(), map()));
         };
     }
 
-    private static <T, E> Trie<E> recurSequentially(T value, ImList<KeyedValidator<T, E>> validators, Trie<E> acc) {
+    private static <T, E> Trie<E> recurSequentially(T value, ImList<Validator<T, E>> validators, Trie<E> acc) {
         return validators.head()
                 .match(v -> {
                     Trie<E> validated = v.validate(value);
@@ -120,21 +120,21 @@ public final class Keyed {
      *         all failed validators otherwise.
      */
     @SafeVarargs
-    public static <K, E> KeyedValidator<K, E> every(KeyedValidator<K, E>... validators) {
+    public static <K, E> Validator<K, E> every(Validator<K, E>... validators) {
         return every(vec(validators));
     }
 
     /**
-     * @see {@link Keyed#every(KeyedValidator...)}
+     * @see {@link Core#every(Validator...)}
      */
-    public static <K, E> KeyedValidator<K, E> every(List<KeyedValidator<K, E>> validators) {
+    public static <K, E> Validator<K, E> every(List<Validator<K, E>> validators) {
         return v -> xform(validators)
                 .map(fn -> fn.apply(v))
                 .fold(trie(vec(), map()), (a, b) -> a.merge(b));
     }
 
     
-    public static <T, E> KeyedValidator<T, E> any(List<KeyedValidator<T, E>> validators) {
+    public static <T, E> Validator<T, E> any(List<Validator<T, E>> validators) {
         return v -> {
             if (validators.size() == 0) {
                 return valid(v);
@@ -152,15 +152,15 @@ public final class Keyed {
     }
 
     @SafeVarargs
-    public static <T, E> KeyedValidator<T, E> any(KeyedValidator<T, E>... validators) {
+    public static <T, E> Validator<T, E> any(Validator<T, E>... validators) {
         return any(Arrays.asList(validators));
     }
 
-    public static <T, E> KeyedValidator<T, E> not(KeyedValidator<T, E> validator, Function<T, E> errorFn) {
+    public static <T, E> Validator<T, E> not(Validator<T, E> validator, Function<T, E> errorFn) {
         return v -> validator.apply(v).isValid() ? invalid(errorFn.apply(v)) : valid(v);
     }
 
-    public static <T, E> KeyedValidator<T, E> not(KeyedValidator<T, E> validator, Supplier<E> lazyE) {
+    public static <T, E> Validator<T, E> not(Validator<T, E> validator, Supplier<E> lazyE) {
         return not(validator, _v -> lazyE.get());
     }
 
@@ -180,7 +180,7 @@ public final class Keyed {
      * @return a valid trie if the given validator succeeded. A trie containing the
      *         collected errors otherwise.
      */
-    public static <O, T, E> KeyedValidator<O, E> prop(Function<O, T> fn, KeyedValidator<T, E> validator) {
+    public static <O, T, E> Validator<O, E> prop(Function<O, T> fn, Validator<T, E> validator) {
         return x -> validator.apply(fn.apply(x));
     }
 
@@ -188,9 +188,9 @@ public final class Keyed {
      * <b>Combinator</b> - Creates a validator that will validate all the elements
      * of a list with the given validator. The validator will validates all the
      * elements of the list and return the collected errors.
-     * It has the same behavior than {@link Keyed#every(KeyedValidator...)}
+     * It has the same behavior than {@link Core#every(Validator...)}
      * 
-     * @see {@link Keyed#every(KeyedValidator...)}
+     * @see {@link Core#every(Validator...)}
      * 
      * @param <V>       the type of the values in the list to validate
      * @param <T>       the type of the list
@@ -202,11 +202,11 @@ public final class Keyed {
      * @return a valid trie if the given validator succeeded. A trie containing the
      *         collected errors otherwise.
      */
-    public static <V, T extends List<V>, E> KeyedValidator<T, E> list(
-            KeyedValidator<V, E> validator,
-            Function<List<KeyedValidator<T, E>>, KeyedValidator<T, E>> reducer) {
+    public static <V, T extends List<V>, E> Validator<T, E> list(
+            Validator<V, E> validator,
+            Function<List<Validator<T, E>>, Validator<T, E>> reducer) {
         return t -> {
-            List<KeyedValidator<T, E>> validators = IntStream
+            List<Validator<T, E>> validators = IntStream
                     .range(0, t.size())
                     .mapToObj(i -> keyed(String.valueOf(i), (T xs) -> validator.apply(xs.get(i))))
                     .toList();
@@ -214,7 +214,7 @@ public final class Keyed {
         };
     }
 
-    public static <O, T, E> KeyedValidator<O, E> required(Function<O, T> fn, Supplier<E> lazyE) {
+    public static <O, T, E> Validator<O, E> required(Function<O, T> fn, Supplier<E> lazyE) {
         return o -> {
             T t = fn.apply(o);
             return t == null ? invalid(lazyE.get()) : valid(t);
@@ -238,7 +238,7 @@ public final class Keyed {
      *         validated value is not null and invalid.
      *         Returns an valid trie if the validated value is not null and valid
      */
-    public static <K, E> KeyedValidator<K, E> required(KeyedValidator<K, E> validator, Supplier<E> lazyE) {
+    public static <K, E> Validator<K, E> required(Validator<K, E> validator, Supplier<E> lazyE) {
         return x -> {
             if (null == x) {
                 return trie(vec(lazyE.get()), map());
@@ -247,12 +247,12 @@ public final class Keyed {
         };
     }
 
-    public static <O, T, E> KeyedValidator<O, E> required(Function<O, T> fn, KeyedValidator<T, E> validator, Supplier<E> lazyE) {
+    public static <O, T, E> Validator<O, E> required(Function<O, T> fn, Validator<T, E> validator, Supplier<E> lazyE) {
         return prop(fn, required(validator, lazyE));
     }
 
     /**
-     * Creates a {@link KeyedValidator} by composing the given validator with 
+     * Creates a {@link Validator} by composing the given validator with 
      * {@link Core#required(Function, Supplier)}.
      * 
      * @param <O>       the type of object accepted by the given fn
@@ -262,18 +262,18 @@ public final class Keyed {
      * @param fn        the function extracting the value to validate from an instance of `O`
      * @param validator the validator to apply on the extracted value
      * @param lazyE     the error to return if the value is <code>null</code>
-     * @return          a {@link KeyedValidator} that returns the given error if the extracted value <code>T</code>
+     * @return          a {@link Validator} that returns the given error if the extracted value <code>T</code>
      *                  from <code>O</code> is null. Returns the result of the given validator otherwise.
      */
-    public static <O, T, E> KeyedValidator<O, E> required(String key, 
+    public static <O, T, E> Validator<O, E> required(String key, 
                                                           Function<O, T> fn, 
-                                                          KeyedValidator<T, E> validator, 
+                                                          Validator<T, E> validator, 
                                                           Supplier<E> lazyE) {
         return keyed(key, required(fn, validator, lazyE));
     }
 
     /**
-     * Creates a {@link KeyedValidator} that return the given error if the value being validated is <code>null</code>. 
+     * Creates a {@link Validator} that return the given error if the value being validated is <code>null</code>. 
      * 
      * @param <O>       the type of object accepted by the given fn
      * @param <T>       the type of values validated
@@ -281,21 +281,21 @@ public final class Keyed {
      * @param key       the key to index the result of the validator
      * @param fn        the function extracting the value to validate from an instance of `O`
      * @param lazyE     the error to return if the value is <code>null</code>
-     * @return          a {@link KeyedValidator} that returns the given error if the extracted value <code>T</code>
+     * @return          a {@link Validator} that returns the given error if the extracted value <code>T</code>
      *                  from <code>O</code> is null. Returns the result of the given validator otherwise.
      */
-    public static <O, T, E> KeyedValidator<O, E> required(String key, 
+    public static <O, T, E> Validator<O, E> required(String key, 
                                                           Function<O, T> fn, 
                                                           Supplier<E> lazyE) {
         return keyed(key, required(fn, lazyE));
     }
 
-    public static <O, T, E> KeyedValidator<O, E> optional(Function<O, T> fn, KeyedValidator<T, E> validator) {
+    public static <O, T, E> Validator<O, E> optional(Function<O, T> fn, Validator<T, E> validator) {
         return prop(fn, optional(validator));
     }
 
     /**
-     * Creates a {@link KeyedValidator} by composing the given validator with 
+     * Creates a {@link Validator} by composing the given validator with 
      * {@link Core#optional(Function, Supplier)}.
      * 
      * @param <O>       the type of object accepted by the given fn
@@ -305,13 +305,13 @@ public final class Keyed {
      * @param fn        the function extracting the value to validate from an instance of `O`
      * @param validator the validator to apply on the extracted value
      * @param lazyE     the error to return if the value is <code>null</code>
-     * @return          a {@link KeyedValidator} that returns the given a valid result if the extracted 
+     * @return          a {@link Validator} that returns the given a valid result if the extracted 
      *                  value <code>T</code> from <code>O</code> is null.
      *                  Returns the result of the given validator otherwise.
      */
-    public static <O, T, E> KeyedValidator<O, E> optional(String key, 
+    public static <O, T, E> Validator<O, E> optional(String key, 
                                                           Function<O, T> fn, 
-                                                          KeyedValidator<T, E> validator) {
+                                                          Validator<T, E> validator) {
         return keyed(key, optional(fn, validator));
 
     }
@@ -327,7 +327,7 @@ public final class Keyed {
      * 
      * @return           Returns a valid trie if the validated value is null.
      */
-    public static <T, E> KeyedValidator<T, E> optional(KeyedValidator<T, E> validator) {
+    public static <T, E> Validator<T, E> optional(Validator<T, E> validator) {
         return x -> {
             if (null == x) {
                 return trie(vec(), map());

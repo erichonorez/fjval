@@ -2,12 +2,12 @@ package org.h5z.jval;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.h5z.jval.Validators.*;
-import static org.h5z.jval.Keyed.*;
+import static org.h5z.jval.Core.*;
 import static org.h5z.jval.DefaultErrors.*;
 import static org.h5z.jval.DefaultErrors.ValidationError.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
-import org.h5z.jval.Keyed.KeyedValidator;
+import org.h5z.jval.Core.Validator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ public class ExamplesUnitTest {
         // The validator must apply all the validators (no fail-fast).
         @Test
         void example0() {
-            KeyedValidator<String, String> usernameValidator = every( // 'every' will execute all the validator even one of
+            Validator<String, String> usernameValidator = every( // 'every' will execute all the validator even one of
                                                                  // them fails
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                     lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
@@ -64,7 +64,7 @@ public class ExamplesUnitTest {
         // The validator must fail at the first failed validator (fail-fast).
         @Test
         void example1() {
-            KeyedValidator<String, String> passwordValidator = sequentially( // 'sequentially' will execute all the validator
+            Validator<String, String> passwordValidator = sequentially( // 'sequentially' will execute all the validator
                                                                         // and stop at the first failed validator
                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                             () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
@@ -108,25 +108,25 @@ public class ExamplesUnitTest {
         
                 @Test
                 void example2() {
-                    KeyedValidator<String, String> firstNameValidator = lengthBetween(3, 42,
+                    Validator<String, String> firstNameValidator = lengthBetween(3, 42,
                             () -> "The length must be between 2 and 42");
-                    KeyedValidator<String, String> lastNameValidator = firstNameValidator; // Same validation for the first name and
+                    Validator<String, String> lastNameValidator = firstNameValidator; // Same validation for the first name and
                                                                                     // the last name
 
-                                                                                    KeyedValidator<String, String> usernameValidator = every(
+                                                                                    Validator<String, String> usernameValidator = every(
                             matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                             lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
-                    KeyedValidator<String, String> passwordValidator = sequentially(
+                    Validator<String, String> passwordValidator = sequentially(
                             matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                     () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
                             lengthBetween(8, 42, () -> "The length must be between 8 and 42"));
 
-                    KeyedValidator<SignUpForm, String> passwordsMatchValidator = cond(
+                    Validator<SignUpForm, String> passwordsMatchValidator = cond(
                             form -> form.password().equals(form.passwordConfirmation()),
                             () -> "Passwords must match");
 
-                    KeyedValidator<SignUpForm, String> formValidator = sequentially( // stops after the first failed validator
+                    Validator<SignUpForm, String> formValidator = sequentially( // stops after the first failed validator
                             every(
                                     prop(SignUpForm::firstName, optional(firstNameValidator)), // first name may be null
                                     prop(SignUpForm::lastName, optional(lastNameValidator)), // last name may be null
@@ -176,7 +176,7 @@ public class ExamplesUnitTest {
                  */
                 @Test
                 void example() {
-                    KeyedValidator<SignUpForm, ValidationError> formValidator = 
+                    Validator<SignUpForm, ValidationError> formValidator = 
                         sequentially(
                                 // The properties are all validated first
                                 every(
@@ -289,12 +289,12 @@ public class ExamplesUnitTest {
         @DisplayName("Simple example")
         void example0() {
             // Let's first create a validator for a user name 
-            KeyedValidator<String, String> usernameValidator = every(
+            Validator<String, String> usernameValidator = every(
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                     lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
             // Then we want to index the result of this validator with the key 'userName'
-            KeyedValidator<String, String> userNameKValidator = Keyed.keyed("userName", usernameValidator);
+            Validator<String, String> userNameKValidator = Core.keyed("userName", usernameValidator);
             Trie<String> result = userNameKValidator.validate("");
 
             assertAll(
@@ -312,7 +312,7 @@ public class ExamplesUnitTest {
         @Test
         @DisplayName("Sign up form validation")
         void example1() {
-            KeyedValidator<SignUpForm, SignUpFormError> formValidator = sequentially(
+            Validator<SignUpForm, SignUpFormError> formValidator = sequentially(
                 every(
                     keyed("firstName", 
                         optional(SignUpForm::firstName, 
@@ -377,7 +377,7 @@ public class ExamplesUnitTest {
         @Test
         @DisplayName("Sign up form with more concise api")
         void example2() {
-            KeyedValidator<SignUpForm, SignUpFormError> formValidator = sequentially(
+            Validator<SignUpForm, SignUpFormError> formValidator = sequentially(
                 every(
                     optional("firstName", 
                              SignUpForm::firstName, 
@@ -442,7 +442,7 @@ public class ExamplesUnitTest {
         @Test
         @DisplayName("Sign up form with default errors")
         void example3() {
-            KeyedValidator<SignUpForm, DefaultErrors.ValidationError> formValidator = sequentially(
+            Validator<SignUpForm, DefaultErrors.ValidationError> formValidator = sequentially(
                 every(
                     optional("firstName", 
                              SignUpForm::firstName, 

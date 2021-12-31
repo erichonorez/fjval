@@ -1,10 +1,10 @@
 package org.h5z.jval;
 
 import static org.h5z.jval.Trie.invalid;
-import static org.h5z.jval.Keyed.sequentially;
-import static org.h5z.jval.Keyed.any;
+import static org.h5z.jval.Core.sequentially;
+import static org.h5z.jval.Core.any;
 import static org.h5z.jval.Trie.valid;
-import static org.h5z.jval.Keyed.not;
+import static org.h5z.jval.Core.not;
 
 import java.util.Collection;
 import java.util.Set;
@@ -12,7 +12,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-import org.h5z.jval.Keyed.KeyedValidator;
+import org.h5z.jval.Core.Validator;
 
 public final class Validators {
 
@@ -20,71 +20,71 @@ public final class Validators {
         throw new IllegalAccessError("Cannot be instantiated");
     }
    
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> gt(T b, Function<T, E> errorFn) {
+    public static <T extends Comparable<T>, E> Validator<T, E> gt(T b, Function<T, E> errorFn) {
         return v -> v.compareTo(b) < 1 
                 ? invalid(errorFn.apply(v)) 
                 : valid(v);
     }
     
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> gt(T b, Supplier<E> lazyE) {
+    public static <T extends Comparable<T>, E> Validator<T, E> gt(T b, Supplier<E> lazyE) {
         return gt(b, _v -> lazyE.get());
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> eq(T b, Function<T, E> errorFn) { 
+    public static <T extends Comparable<T>, E> Validator<T, E> eq(T b, Function<T, E> errorFn) { 
         return v -> v.compareTo(b) == 0
                         ? invalid(errorFn.apply(v))
                         : valid(v);
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> eq(T b, Supplier<E> lazyE) {
+    public static <T extends Comparable<T>, E> Validator<T, E> eq(T b, Supplier<E> lazyE) {
         return eq(b, _v -> lazyE.get());
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> gte(T b, Function<T, E> errorFn) {
+    public static <T extends Comparable<T>, E> Validator<T, E> gte(T b, Function<T, E> errorFn) {
         return any(gt(b, errorFn), eq(b, errorFn));
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> gte(T b, Supplier<E> lazyE) {
+    public static <T extends Comparable<T>, E> Validator<T, E> gte(T b, Supplier<E> lazyE) {
         return gt(b, _v -> lazyE.get());
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> lt(T b, Function<T, E> errorFn) {
+    public static <T extends Comparable<T>, E> Validator<T, E> lt(T b, Function<T, E> errorFn) {
         return sequentially(
                     not(eq(b, errorFn), errorFn), 
                     not(gt(b, errorFn), errorFn));
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> lt(T b, Supplier<E> lazyE) {
+    public static <T extends Comparable<T>, E> Validator<T, E> lt(T b, Supplier<E> lazyE) {
         return lt(b, _v -> lazyE.get());
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> lte(T b, Function<T, E> errorFn) {
+    public static <T extends Comparable<T>, E> Validator<T, E> lte(T b, Function<T, E> errorFn) {
         return not(gt(b, errorFn), errorFn);
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> lte(T b, Supplier<E> lazyE) {
+    public static <T extends Comparable<T>, E> Validator<T, E> lte(T b, Supplier<E> lazyE) {
         return lte(b, _v -> lazyE.get());
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> between(T a, T b, Function<T, E> errorFn) {
+    public static <T extends Comparable<T>, E> Validator<T, E> between(T a, T b, Function<T, E> errorFn) {
         return sequentially(
                     gte(a, errorFn), 
                     lte(b, errorFn));
     }
 
-    public static <T extends Comparable<T>, E> KeyedValidator<T, E> between(T a, T b, Supplier<E> lazyE) {
+    public static <T extends Comparable<T>, E> Validator<T, E> between(T a, T b, Supplier<E> lazyE) {
         return sequentially(
                     gte(a, lazyE), 
                     lte(b, lazyE));
     }
 
-    public static <E> KeyedValidator<String, E> matches(String regex, Function<String, E> errorFn) {
+    public static <E> Validator<String, E> matches(String regex, Function<String, E> errorFn) {
         return v -> !Pattern.compile(regex).matcher(v).find()
                         ? invalid(errorFn.apply(v))
                         : valid(v);
     }
 
-    public static <E> KeyedValidator<String, E> matches(String regex, Supplier<E> lazyE) {
+    public static <E> Validator<String, E> matches(String regex, Supplier<E> lazyE) {
         return matches(regex, _v -> lazyE.get());
     }
 
@@ -100,7 +100,7 @@ public final class Validators {
      * @return an empty list if the length of the validated value is between the
      *         given bounds. A list with containing the supplier error otherwise.
      */
-    public static <E> KeyedValidator<String, E> lengthBetween(int inclMin, int inclMax, Supplier<E> errorSupplier) {
+    public static <E> Validator<String, E> lengthBetween(int inclMin, int inclMax, Supplier<E> errorSupplier) {
         return v -> lengthBetween(inclMin, inclMax, _v -> errorSupplier.get()).apply(v);
     }
 
@@ -113,7 +113,7 @@ public final class Validators {
      * @return an empty list if the length of the validated value is between the
      *         given bounds. A list with containing the supplier error otherwise.
      */
-    public static <E> KeyedValidator<String, E> lengthBetween(int inclMin, int inclMax, Function<String, E> errorFn) {
+    public static <E> Validator<String, E> lengthBetween(int inclMin, int inclMax, Function<String, E> errorFn) {
         return v -> {
             if (v.length() >= inclMin && v.length() <= inclMax) {
                 return valid(v);
@@ -122,27 +122,27 @@ public final class Validators {
         };
     }
 
-    public static <E> KeyedValidator<String, E> contains(CharSequence b, Function<String, E> errorFn) {
+    public static <E> Validator<String, E> contains(CharSequence b, Function<String, E> errorFn) {
         return v -> !v.contains(b) 
                         ? invalid(errorFn.apply(v))
                         : valid(v);
     }
 
-    public static <E> KeyedValidator<String, E> contains(CharSequence b, Supplier<E> lazyE) {
+    public static <E> Validator<String, E> contains(CharSequence b, Supplier<E> lazyE) {
         return contains(b, _v -> lazyE.get());
     }
 
-    public static <E> KeyedValidator<String, E> notBlank(Function<String, E> errorFn) {
+    public static <E> Validator<String, E> notBlank(Function<String, E> errorFn) {
         return v -> v.isBlank() 
                         ? invalid(errorFn.apply(v))
                         : valid(v);
     }
 
-    public static <E> KeyedValidator<String, E> notBlank(Supplier<E> lazyE) {
+    public static <E> Validator<String, E> notBlank(Supplier<E> lazyE) {
         return notBlank(_v -> lazyE.get());
     }
 
-    public static <T, E> KeyedValidator<T, E> in(Set<T> xs, Function<T, E> errorFn) {
+    public static <T, E> Validator<T, E> in(Set<T> xs, Function<T, E> errorFn) {
         return v -> !xs.contains(v) 
                         ? invalid(errorFn.apply(v))
                         : valid(v);
@@ -150,39 +150,39 @@ public final class Validators {
 
     // Object validation
 
-    public static <T, E> KeyedValidator<T, E> cond(Function<T, Boolean> s, Function<T, E> errorFn) {
+    public static <T, E> Validator<T, E> cond(Function<T, Boolean> s, Function<T, E> errorFn) {
         return v -> !s.apply(v) 
                         ? invalid(errorFn.apply(v))
                         : valid(v);
     }
 
-    public static <T, E> KeyedValidator<T, E> cond(Function<T, Boolean> s, Supplier<E> lazyE) {
+    public static <T, E> Validator<T, E> cond(Function<T, Boolean> s, Supplier<E> lazyE) {
         return cond(s, _v -> lazyE.get());
     }
 
-    public static <T, E> KeyedValidator<T, E> required(Supplier<E> supplier) {
+    public static <T, E> Validator<T, E> required(Supplier<E> supplier) {
         return v -> null == v 
                         ? invalid(supplier.get())
                         : valid(v);
     }
 
-    public static <T, E> KeyedValidator<T, E> in(Set<T> xs, Supplier<E> lazyE) {
+    public static <T, E> Validator<T, E> in(Set<T> xs, Supplier<E> lazyE) {
         return in(xs, _v -> lazyE.get());
     }
 
-    public static <T, E> KeyedValidator<T, E> equals(T b, Function<T, E> errorFn) {
+    public static <T, E> Validator<T, E> equals(T b, Function<T, E> errorFn) {
         return v -> !v.equals(b)
                         ? invalid(errorFn.apply(v))
                         : valid(v);
      }
 
-    public static <T, E> KeyedValidator<T, E> equals(T b, Supplier<E> lazyE) {
+    public static <T, E> Validator<T, E> equals(T b, Supplier<E> lazyE) {
         return equals(b, _v -> lazyE.get());
     }
 
     // Collections validation
 
-    public static <E> KeyedValidator<Collection<?>, E> sizeBetween(int inclMin, int inclMax, Function<Collection<?>, E> errorFn) {
+    public static <E> Validator<Collection<?>, E> sizeBetween(int inclMin, int inclMax, Function<Collection<?>, E> errorFn) {
         return v -> {
             if (v.size() >= inclMin && v.size() <= inclMax) {
                 return valid(v);
@@ -191,7 +191,7 @@ public final class Validators {
         };
     }
 
-    public static <E> KeyedValidator<Collection<?>, E> sizeBetween(int inclMin, int inclMax, Supplier<E> lazyE) {
+    public static <E> Validator<Collection<?>, E> sizeBetween(int inclMin, int inclMax, Supplier<E> lazyE) {
         return v -> sizeBetween(inclMin, inclMax, _v -> lazyE.get()).apply(v);
     }
 
