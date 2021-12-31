@@ -9,12 +9,13 @@ import static org.h5z.jval.Keyed.sequentially;
 import static org.h5z.jval.Keyed.required;
 import static org.h5z.jval.Keyed.optional;
 import static org.h5z.jval.Trie.trie;
+import static org.h5z.jval.Trie.valid;
+import static org.h5z.jval.Trie.invalid;
 import static org.h5z.jval.Validators.gt;
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 
-import org.h5z.jval.Core.Validator;
 import org.h5z.jval.Keyed.KeyedValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,9 +27,9 @@ public class KeyedUnitTest {
     @DisplayName("keyed")
     class KeyedTest { // named KeyedTest to avoid collision with the class Keyed
 
-        Validator<String, String> containsA = s -> s.contains("a")
-                ? Core.valid(s)
-                : Core.invalid("Does not contains a");
+        KeyedValidator<String, String> containsA = s -> s.contains("a")
+                ? valid(s)
+                : invalid("Does not contains a");
 
         @Nested
         @DisplayName("With simple validator")
@@ -144,10 +145,10 @@ public class KeyedUnitTest {
     @DisplayName("prop")
     static class Prop {
 
-        Validator<Integer, String> gt0 = v -> v > 0 ? Core.valid(v) : Core.invalid("gt0");
+        KeyedValidator<Integer, String> gt0 = v -> v > 0 ? valid(v) : invalid("gt0");
         KeyedValidator<RootClass, String> rootValidator = keyed("x",
                 prop(RootClass::getX, keyed("y",
-                        Core.prop(NestedClass::getY, gt0))));
+                        prop(NestedClass::getY, gt0))));
 
         @Test
         @DisplayName("Returns a valid trie if the given validator succeeded")
@@ -235,8 +236,8 @@ public class KeyedUnitTest {
         @DisplayName("With keyed validator")
         class WithKeyedValidator {
 
-            Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
-            KeyedValidator<Point, String> pointValidator = keyed("x", Core.prop(Point::getX, xValidator));
+            KeyedValidator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
+            KeyedValidator<Point, String> pointValidator = keyed("x", prop(Point::getX, xValidator));
             KeyedValidator<java.util.List<Point>, String> listOfPointValidator = list(pointValidator, Keyed::every);
 
             @Test
@@ -304,9 +305,9 @@ public class KeyedUnitTest {
     @DisplayName("required")
     class Required {
 
-        Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
+        KeyedValidator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
         KeyedValidator<Point, String> pointValidator = required( // the validated object `Point` is required
-                keyed("x", Core.prop(Point::getX, xValidator)),
+                keyed("x", prop(Point::getX, xValidator)),
                 () -> "Required");
 
         @Test
@@ -351,9 +352,9 @@ public class KeyedUnitTest {
     @DisplayName("Optional")
     class Optional {
         
-        Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
+        KeyedValidator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
         KeyedValidator<Point, String> pointValidator = optional( // the validated object `Point` is optional
-                keyed("x", Core.prop(Point::getX, xValidator))
+                keyed("x", prop(Point::getX, xValidator))
         );
 
         @Test

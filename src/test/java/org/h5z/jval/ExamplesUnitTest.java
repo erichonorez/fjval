@@ -2,13 +2,11 @@ package org.h5z.jval;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.h5z.jval.Validators.*;
-import static org.h5z.jval.Core.*;
 import static org.h5z.jval.Keyed.*;
 import static org.h5z.jval.DefaultErrors.*;
 import static org.h5z.jval.DefaultErrors.ValidationError.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
-import org.h5z.jval.Core.Validator;
 import org.h5z.jval.Keyed.KeyedValidator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,25 +27,35 @@ public class ExamplesUnitTest {
         // The validator must apply all the validators (no fail-fast).
         @Test
         void example0() {
-            Validator<String, String> usernameValidator = every( // 'every' will execute all the validator even one of
+            KeyedValidator<String, String> usernameValidator = every( // 'every' will execute all the validator even one of
                                                                  // them fails
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                     lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
             assertAll(
 
-                    () -> assertThat(usernameValidator.validate(""))
-                            .matches(Core::isInvalid)
+                    () -> {
+                        Trie<String> result = usernameValidator.validate("");
+                        assertThat(result)
+                            .matches(Trie::isInvalid);
+                        
+                        assertThat(result.getErrors())
                             .containsOnly(
                                     "It must only contain alphanumeric characters and '_'",
-                                    "The length must be between 3 and 16"),
+                                    "The length must be between 3 and 16");
+                    },
 
-                    () -> assertThat(usernameValidator.validate("this is invalid"))
-                            .matches(Core::isInvalid)
-                            .containsOnly("It must only contain alphanumeric characters and '_'"),
+                    () -> {
+                        Trie<String> result = usernameValidator.validate("this is invalid");
+                        assertThat(result)
+                            .matches(Trie::isInvalid);
+                        
+                        assertThat(result.getErrors())
+                            .containsOnly("It must only contain alphanumeric characters and '_'");
+                    },
 
                     () -> assertThat(usernameValidator.validate("myUserName_76"))
-                            .matches(Core::isValid));
+                            .matches(Trie::isValid));
         }
 
         // We want to validate a password
@@ -56,7 +64,7 @@ public class ExamplesUnitTest {
         // The validator must fail at the first failed validator (fail-fast).
         @Test
         void example1() {
-            Validator<String, String> passwordValidator = sequentially( // 'sequentially' will execute all the validator
+            KeyedValidator<String, String> passwordValidator = sequentially( // 'sequentially' will execute all the validator
                                                                         // and stop at the first failed validator
                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                             () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
@@ -64,17 +72,30 @@ public class ExamplesUnitTest {
 
             assertAll(
 
-                    () -> assertThat(passwordValidator.validate(""))
-                            .matches(Core::isInvalid)
+                    () -> { 
+                        Trie<String> result = passwordValidator.validate("");
+                        assertThat(result)
+                            .matches(Trie::isInvalid);
+                        
+                        assertThat(result.getErrors())
                             .containsOnly(
-                                    "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
+                                    "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)");
+                    },
 
-                    () -> assertThat(passwordValidator.validate("Short!8"))
-                            .matches(Core::isInvalid)
-                            .containsOnly("The length must be between 8 and 42"),
+                    () -> {
+                        Trie<String> result = passwordValidator.validate("Short!8");
+                        assertThat(result)
+                            .matches(Trie::isInvalid);
 
-                    () -> assertThat(passwordValidator.validate("P4ssW0rd!42"))
-                            .matches(Core::isValid));
+                        assertThat(result.getErrors())
+                            .containsOnly("The length must be between 8 and 42");
+                    },
+
+                    () -> { 
+                        assertThat(passwordValidator.validate("P4ssW0rd!42"))
+                            .matches(Trie::isValid);
+                    }
+            );
         }
 
         @Nested
@@ -87,25 +108,25 @@ public class ExamplesUnitTest {
         
                 @Test
                 void example2() {
-                    Validator<String, String> firstNameValidator = lengthBetween(3, 42,
+                    KeyedValidator<String, String> firstNameValidator = lengthBetween(3, 42,
                             () -> "The length must be between 2 and 42");
-                    Validator<String, String> lastNameValidator = firstNameValidator; // Same validation for the first name and
+                    KeyedValidator<String, String> lastNameValidator = firstNameValidator; // Same validation for the first name and
                                                                                     // the last name
 
-                    Validator<String, String> usernameValidator = every(
+                                                                                    KeyedValidator<String, String> usernameValidator = every(
                             matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                             lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
-                    Validator<String, String> passwordValidator = sequentially(
+                    KeyedValidator<String, String> passwordValidator = sequentially(
                             matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                     () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
                             lengthBetween(8, 42, () -> "The length must be between 8 and 42"));
 
-                    Validator<SignUpForm, String> passwordsMatchValidator = cond(
+                    KeyedValidator<SignUpForm, String> passwordsMatchValidator = cond(
                             form -> form.password().equals(form.passwordConfirmation()),
                             () -> "Passwords must match");
 
-                    Validator<SignUpForm, String> formValidator = sequentially( // stops after the first failed validator
+                    KeyedValidator<SignUpForm, String> formValidator = sequentially( // stops after the first failed validator
                             every(
                                     prop(SignUpForm::firstName, optional(firstNameValidator)), // first name may be null
                                     prop(SignUpForm::lastName, optional(lastNameValidator)), // last name may be null
@@ -117,24 +138,26 @@ public class ExamplesUnitTest {
                     );
 
                     assertAll(
-                            () -> assertThat(formValidator.validate(new SignUpForm(null, null, null, null, null)))
+                            () -> assertThat(formValidator.validate(new SignUpForm(null, null, null, null, null)).getErrors())
                                     .containsExactly(
                                             "A username is mandatory",
                                             "A password is mandatory",
                                             "Confirm your password"),
 
                             () -> assertThat(
-                                    formValidator.validate(new SignUpForm("", "Doe", "username", "P4ssW0rd!42", "P4ssW0rd!42")))
+                                    formValidator.validate(new SignUpForm("", "Doe", "username", "P4ssW0rd!42", "P4ssW0rd!42")).getErrors())
                                             .containsExactly("The length must be between 2 and 42"), // The first name validator
                                                                                                     // has failed
 
                             () -> assertThat(formValidator
-                                    .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "password")))
+                                    .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "password")).getErrors())
                                             .containsExactly("Passwords must match"),
 
-                            () -> assertThat(formValidator
+                            () ->
+                                assertThat(formValidator
                                     .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "P4ssW0rd!42")))
-                                            .matches(Core::isValid));
+                                            .matches(Trie::isValid)
+                    );
 
                 }
             } 
@@ -153,7 +176,7 @@ public class ExamplesUnitTest {
                  */
                 @Test
                 void example() {
-                    Validator<SignUpForm, ValidationError> formValidator = 
+                    KeyedValidator<SignUpForm, ValidationError> formValidator = 
                         sequentially(
                                 // The properties are all validated first
                                 every(
@@ -207,23 +230,23 @@ public class ExamplesUnitTest {
 
                     // The validation result is a list of SignUpFormError.
                     assertAll(
-                            () -> assertThat(formValidator.validate(new SignUpForm(null, null, null, null, null)))
+                            () -> assertThat(formValidator.validate(new SignUpForm(null, null, null, null, null)).getErrors())
                                     .containsExactly(
                                             new UserNameRequiredError(),
                                             new PasswordRequiredError(),
                                             new ConfirmedPasswordRequiredError()),
 
                             () -> assertThat(
-                                    formValidator.validate(new SignUpForm("", "Doe", "username", "P4ssW0rd!42", "P4ssW0rd!42")))
+                                    formValidator.validate(new SignUpForm("", "Doe", "username", "P4ssW0rd!42", "P4ssW0rd!42")).getErrors())
                                             .containsExactly(new FirstNameLengthError()),
 
                             () -> assertThat(formValidator
-                                    .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "password")))
+                                    .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "password")).getErrors())
                                             .containsExactly(new PasswordsDontMatchError()),
 
                             () -> assertThat(formValidator
                                     .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "P4ssW0rd!42")))
-                                            .matches(Core::isValid));
+                                            .matches(Trie::isValid));
                 }
             }
         }
@@ -266,7 +289,7 @@ public class ExamplesUnitTest {
         @DisplayName("Simple example")
         void example0() {
             // Let's first create a validator for a user name 
-            Validator<String, String> usernameValidator = every(
+            KeyedValidator<String, String> usernameValidator = every(
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                     lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 

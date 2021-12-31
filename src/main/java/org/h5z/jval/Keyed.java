@@ -5,14 +5,14 @@ import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 import static org.organicdesign.fp.StaticImports.xform;
 import static org.organicdesign.fp.StaticImports.xformArray;
-import static org.h5z.jval.Trie.trie;
+import static org.h5z.jval.Trie.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
-import org.h5z.jval.Core.Validator;
 import org.organicdesign.fp.collections.ImList;
 
 public final class Keyed {
@@ -34,29 +34,6 @@ public final class Keyed {
     }
 
     /**
-     * Creates a {@link KeyedValidator} given a key and a {@link Validator}.
-     * 
-     * Example: If the given key is `x` then the result of the validator will be
-     * accessible with the key `x` in the resulting trie.
-     * 
-     * @param <T>       the type of values validated
-     * @param <E>       the type of errors returned by the validator
-     * @param key       the key to index the result of the validator
-     * @param validator the validator to apply
-     * 
-     * @return a keyed validator.
-     */
-    public static <T, E> KeyedValidator<T, E> keyed(String key, Validator<T, E> validator) {
-        return v -> {
-            List<E> result = validator.apply(v);
-            if (Core.isValid(result)) {
-                return Trie.valid(key, v);
-            }
-            return Trie.invalid(key, xform(result).toImList());
-        };
-    }
-
-    /**
      * Creates a {@link KeyedValidator} given a key and another {@KeyedValidator}.
      * The given key will be used to access the result of the given valitors in the
      * resulting trie.
@@ -74,18 +51,6 @@ public final class Keyed {
      */
     public static <T, E> KeyedValidator<T, E> keyed(String key, KeyedValidator<T, E> validator) {
         return v -> trie(vec(), map(tup(key, validator.apply(v))));
-    }
-
-    /**
-     * Creates a {@link KeyedValidator} reporting the errors of the supplied {@link Validator} at the root of the trie.
-     * 
-     * @param <T>   the type of value being validated
-     * @param <E>   type type of error returned by the validator
-     * @param validator the validator to execute
-     * @return          a keyed validator.
-     */
-    public static <T, E> KeyedValidator<T, E> globally(Validator<T, E> validator) { 
-        return keyed(Trie.ROOT_KEY, validator);
     }
 
     /**
@@ -168,6 +133,37 @@ public final class Keyed {
                 .fold(trie(vec(), map()), (a, b) -> a.merge(b));
     }
 
+    
+    public static <T, E> KeyedValidator<T, E> any(List<KeyedValidator<T, E>> validators) {
+        return v -> {
+            if (validators.size() == 0) {
+                return valid(v);
+            } else if (validators.size() == 1) {
+                return validators.get(0).apply(v);
+            } else {
+                Trie<E> result = validators.get(0).apply(v);
+                if (result.isInvalid()) {
+                    return result;
+                } else {
+                    return any(validators.subList(1, validators.size())).apply(v);
+                }
+            }
+        };
+    }
+
+    @SafeVarargs
+    public static <T, E> KeyedValidator<T, E> any(KeyedValidator<T, E>... validators) {
+        return any(Arrays.asList(validators));
+    }
+
+    public static <T, E> KeyedValidator<T, E> not(KeyedValidator<T, E> validator, Function<T, E> errorFn) {
+        return v -> validator.apply(v).isValid() ? invalid(errorFn.apply(v)) : valid(v);
+    }
+
+    public static <T, E> KeyedValidator<T, E> not(KeyedValidator<T, E> validator, Supplier<E> lazyE) {
+        return not(validator, _v -> lazyE.get());
+    }
+
     /**
      * <b>Combinator</b> - Creates a validator that will first extract the value to
      * validate by calling the given fn on the provided value and then pass it to
@@ -207,7 +203,7 @@ public final class Keyed {
      *         collected errors otherwise.
      */
     public static <V, T extends List<V>, E> KeyedValidator<T, E> list(
-            Validator<V, E> validator,
+            KeyedValidator<V, E> validator,
             Function<List<KeyedValidator<T, E>>, KeyedValidator<T, E>> reducer) {
         return t -> {
             List<KeyedValidator<T, E>> validators = IntStream
@@ -218,33 +214,10 @@ public final class Keyed {
         };
     }
 
-    /**
-     * <b>Combinator</b> - Creates a validator that will validate all the elements
-     * of a list with the given validator. The validator will validates all the
-     * elements of the list and return the collected errors.
-     * It has the same behavior than {@link Keyed#every(KeyedValidator...)}
-     * 
-     * @see {@link Keyed#every(KeyedValidator...)}
-     * 
-     * @param <V>       the type of the values in the list to validate
-     * @param <T>       the type of the list
-     * @param <E>       the type of errors returned by the validator
-     * @param validator the validator to apply to all elements of a list
-     * @param reducer   a function reducing a List<KeyedValidator<T, E>> to a
-     *                  KeyedValidator<T, E>
-     * 
-     * @return a valid trie if the given validator succeeded. A trie containing the
-     *         collected errors otherwise.
-     */
-    public static <V, T extends List<V>, E> KeyedValidator<T, E> list(
-            KeyedValidator<V, E> validator,
-            Function<List<KeyedValidator<T, E>>, KeyedValidator<T, E>> reducer) {
-        return t -> {
-            List<KeyedValidator<T, E>> validators = IntStream
-                    .range(0, t.size())
-                    .mapToObj(i -> keyed(String.valueOf(i), (T xs) -> validator.apply(xs.get(i))))
-                    .toList();
-            return reducer.apply(validators).apply(t);
+    public static <O, T, E> KeyedValidator<O, E> required(Function<O, T> fn, Supplier<E> lazyE) {
+        return o -> {
+            T t = fn.apply(o);
+            return t == null ? invalid(lazyE.get()) : valid(t);
         };
     }
 
@@ -274,25 +247,8 @@ public final class Keyed {
         };
     }
 
-    /**
-     * Creates a {@link KeyedValidator} by composing the given validator with 
-     * {@link Core#required(Function, Supplier)}.
-     * 
-     * @param <O>       the type of object accepted by the given fn
-     * @param <T>       the type of values validated
-     * @param <E>       the type of errors returned by the validator
-     * @param key       the key to index the result of the validator
-     * @param fn        the function extracting the value to validate from an instance of `O`
-     * @param validator the validator to apply on the extracted value
-     * @param lazyE     the error to return if the value is <code>null</code>
-     * @return          a {@link KeyedValidator} that return the given error if the extracted value <code>T</code>
-     *                  from <code>O</code> is null. Return the result of the given validator otherwise.
-     */
-    public static <O, T, E> KeyedValidator<O, E> required(String key, 
-                                                          Function<O, T> fn, 
-                                                          Validator<T, E> validator, 
-                                                          Supplier<E> lazyE) {
-        return keyed(key, Core.prop(fn, Core.required(validator, lazyE)));
+    public static <O, T, E> KeyedValidator<O, E> required(Function<O, T> fn, KeyedValidator<T, E> validator, Supplier<E> lazyE) {
+        return prop(fn, required(validator, lazyE));
     }
 
     /**
@@ -313,7 +269,7 @@ public final class Keyed {
                                                           Function<O, T> fn, 
                                                           KeyedValidator<T, E> validator, 
                                                           Supplier<E> lazyE) {
-        return keyed(key, prop(fn, required(validator, lazyE)));
+        return keyed(key, required(fn, validator, lazyE));
     }
 
     /**
@@ -331,29 +287,11 @@ public final class Keyed {
     public static <O, T, E> KeyedValidator<O, E> required(String key, 
                                                           Function<O, T> fn, 
                                                           Supplier<E> lazyE) {
-        return keyed(key, Core.required(fn, lazyE));
+        return keyed(key, required(fn, lazyE));
     }
 
-    /**
-     * Creates a {@link KeyedValidator} by composing the given validator with 
-     * {@link Core#optional(Function, Supplier)}.
-     * 
-     * @param <O>       the type of object accepted by the given fn
-     * @param <T>       the type of values validated
-     * @param <E>       the type of errors returned by the validator
-     * @param key       the key to index the result of the validator
-     * @param fn        the function extracting the value to validate from an instance of `O`
-     * @param validator the validator to apply on the extracted value
-     * @param lazyE     the error to return if the value is <code>null</code>
-     * @return          a {@link KeyedValidator} that returns the given a valid result if the extracted 
-     *                  value <code>T</code> from <code>O</code> is null.
-     *                  Returns the result of the given validator otherwise.
-     */
-    public static <O, T, E> KeyedValidator<O, E> optional(String key, 
-                                                          Function<O, T> fn, 
-                                                          Validator<T, E> validator) {
-        return keyed(key, Core.prop(fn, Core.optional(validator)));
-
+    public static <O, T, E> KeyedValidator<O, E> optional(Function<O, T> fn, KeyedValidator<T, E> validator) {
+        return prop(fn, optional(validator));
     }
 
     /**
@@ -374,7 +312,7 @@ public final class Keyed {
     public static <O, T, E> KeyedValidator<O, E> optional(String key, 
                                                           Function<O, T> fn, 
                                                           KeyedValidator<T, E> validator) {
-        return keyed(key, prop(fn, optional(validator)));
+        return keyed(key, optional(fn, validator));
 
     }
 

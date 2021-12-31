@@ -225,6 +225,10 @@ public class Trie<E> {
         return trie(es, map());
     }
 
+    public static <E> Trie<E> invalid(E e) {
+        return invalid(vec(e));
+    }
+
     public static <E> Trie<E> invalid(String key, ImList<E> es) {
         if (ROOT_KEY.equals(key)) {
             return Trie.invalid(es);

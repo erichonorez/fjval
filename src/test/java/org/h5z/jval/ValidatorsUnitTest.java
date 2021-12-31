@@ -1,11 +1,8 @@
 package org.h5z.jval;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.h5z.jval.Core.isInvalid;
 import static org.h5z.jval.Validators.required;
 import static org.junit.jupiter.api.Assertions.assertAll;
-
-import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -20,12 +17,12 @@ public class ValidatorsUnitTest {
         @Test
         @DisplayName("Should fail if the value is null")
         public void test() {
-            List<String> result = required(() -> "Required").apply(null);
+            Trie<String> result = required(() -> "Required").apply(null);
 
             assertAll(
-                () -> assertThat(isInvalid(result)).isTrue(),
-                () -> assertThat(result.size()).isEqualTo(1),
-                () -> assertThat(result.get(0)).isEqualTo("Required")
+                () -> assertThat(result.isInvalid()).isTrue(),
+                () -> assertThat(result.getErrors().size()).isEqualTo(1),
+                () -> assertThat(result.getErrors().get(0)).isEqualTo("Required")
             );
         }
     }
