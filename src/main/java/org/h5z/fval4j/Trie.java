@@ -7,6 +7,7 @@ import static org.organicdesign.fp.StaticImports.xform;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.organicdesign.fp.collections.ImList;
 import org.organicdesign.fp.collections.ImMap;
@@ -21,26 +22,39 @@ public class Trie<E> {
     final ImList<E> errors;
     final ImMap<String, Trie<E>> children;
 
-    public Trie(ImList<E> errors, ImMap<String, Trie<E>> children) {
+    /**
+     * 
+     * @param errors
+     * @param children
+     * 
+     * @see {@link Trie#invalid(Object)} to create a trie with an error at the root
+     * @see {@link Trie#invalid(String, List)} to create a trie with the given errors with the given path
+     * @see {@link Trie#valid(Object)} to create a valid trie for the given value
+     * @see {@link Trie#valid(String, Object)} to create a valid trie with the given path
+     * @see {@link Trie#trie(List, Map)} to create a trie on your own
+     * 
+     * @author Eric Honorez
+     */
+    private Trie(ImList<E> errors, ImMap<String, Trie<E>> children) {
         this.errors = errors;
         this.children = children;
     }
 
-    public ImList<E> getErrors() {
+    public List<E> getErrors() {
         return this.errors;
     }
 
-    public ImList<E> getErrors(List<String> path) {
+    public List<E> getErrors(List<String> path) {
         return this.get(path)
             .match(n -> n.getErrors(),
                    () -> vec());
     }
 
-    public ImList<E> getErrors(String... path) {
+    public List<E> getErrors(String... path) {
         return this.getErrors(Arrays.asList(path));
     }
 
-    public ImMap<String, Trie<E>> getChildren() {
+    public Map<String, Trie<E>> getChildren() {
         return this.children;
     }
 
@@ -170,7 +184,7 @@ public class Trie<E> {
      * 
      * @return a map
      */
-    public ImMap<String, ImList<E>> toMap() {
+    public Map<String, ImList<E>> toMap() {
         return recurToMap("", this, map());
     }
 
@@ -218,8 +232,8 @@ public class Trie<E> {
     public String toString() {
         return "{ errors: [%s], children: [%s] }"
                 .formatted(
-                    String.join(", ", this.getErrors().map(Object::toString)),
-                    String.join(", \n", this.getChildren().map(kv -> "{ %s: %s }".formatted(kv.getKey(), kv.getValue().toString())))
+                    String.join(", ", this.errors.map(Object::toString)),
+                    String.join(", \n", this.children.map(kv -> "{ %s: %s }".formatted(kv.getKey(), kv.getValue().toString())))
                 );
     }
 
@@ -234,7 +248,7 @@ public class Trie<E> {
         return trie(vec(), map(tup(key, Trie.valid(v))));
     }
 
-    public static <E> Trie<E> invalid(ImList<E> es) {
+    public static <E> Trie<E> invalid(List<E> es) {
         return trie(es, map());
     }
 
@@ -242,14 +256,14 @@ public class Trie<E> {
         return invalid(vec(e));
     }
 
-    public static <E> Trie<E> invalid(String key, ImList<E> es) {
+    public static <E> Trie<E> invalid(String key, List<E> es) {
         if (ROOT_KEY.equals(key)) {
-            return Trie.invalid(es);
+            return invalid(es);
         }
-        return trie(vec(), map(tup(key, Trie.invalid(es))));
+        return trie(vec(), map(tup(key, invalid(es))));
     }
 
-    public static <E> Trie<E> trie(ImList<E> errors, ImMap<String, Trie<E>> children) {
-        return new Trie<>(errors, children);
+    public static <E> Trie<E> trie(List<E> errors, Map<String, Trie<E>> children) {
+        return new Trie<>(xform(errors).toImList(), xform(children.entrySet()).toImMap(kv -> kv));
     }
 }
