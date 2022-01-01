@@ -109,6 +109,10 @@ public class Trie<E> {
         return recurGet(current, tail, this);
     }
 
+    public Option<Trie<E>> get(String... path) {
+        return get(Arrays.asList(path));
+    }
+
     private static <E> Option<Trie<E>> recurGet(String head, ImList<String> tail, Trie<E> root) {
         if ("".equals(head)) {
             return Option.some(root);
@@ -208,6 +212,15 @@ public class Trie<E> {
         int result = getErrors().hashCode();
         result = 31 * result + getChildren().hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "{ errors: [%s], children: [%s] }"
+                .formatted(
+                    String.join(", ", this.getErrors().map(Object::toString)),
+                    String.join(", \n", this.getChildren().map(kv -> "{ %s: %s }".formatted(kv.getKey(), kv.getValue().toString())))
+                );
     }
 
     public static <E, T> Trie<E> valid(T v) {

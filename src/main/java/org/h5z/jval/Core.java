@@ -214,13 +214,6 @@ public final class Core {
         };
     }
 
-    public static <O, T, E> Validator<O, E> required(Function<O, T> fn, Supplier<E> lazyE) {
-        return o -> {
-            T t = fn.apply(o);
-            return t == null ? invalid(lazyE.get()) : valid(t);
-        };
-    }
-
     /**
      * Creates a validator that will apply the given validator only if the validated
      * value is not null. If the validated value is null it returns a given error.
@@ -266,28 +259,10 @@ public final class Core {
      *                  from <code>O</code> is null. Returns the result of the given validator otherwise.
      */
     public static <O, T, E> Validator<O, E> required(String key, 
-                                                          Function<O, T> fn, 
-                                                          Validator<T, E> validator, 
-                                                          Supplier<E> lazyE) {
+                                                     Function<O, T> fn, 
+                                                     Validator<T, E> validator, 
+                                                     Supplier<E> lazyE) {
         return keyed(key, required(fn, validator, lazyE));
-    }
-
-    /**
-     * Creates a {@link Validator} that return the given error if the value being validated is <code>null</code>. 
-     * 
-     * @param <O>       the type of object accepted by the given fn
-     * @param <T>       the type of values validated
-     * @param <E>       the type of errors returned by the validator
-     * @param key       the key to index the result of the validator
-     * @param fn        the function extracting the value to validate from an instance of `O`
-     * @param lazyE     the error to return if the value is <code>null</code>
-     * @return          a {@link Validator} that returns the given error if the extracted value <code>T</code>
-     *                  from <code>O</code> is null. Returns the result of the given validator otherwise.
-     */
-    public static <O, T, E> Validator<O, E> required(String key, 
-                                                          Function<O, T> fn, 
-                                                          Supplier<E> lazyE) {
-        return keyed(key, required(fn, lazyE));
     }
 
     public static <O, T, E> Validator<O, E> optional(Function<O, T> fn, Validator<T, E> validator) {

@@ -341,7 +341,8 @@ public class ExamplesUnitTest {
 
                     keyed("passwordConfirmation",
                         required(SignUpForm::passwordConfirmation,
-                            () -> new ConfirmedPasswordRequiredError()))),
+                                 identity(),
+                                 () -> new ConfirmedPasswordRequiredError()))),
 
                 globally(
                     cond(
@@ -406,6 +407,7 @@ public class ExamplesUnitTest {
 
                     required("passwordConfirmation",
                              SignUpForm::passwordConfirmation,
+                             identity(),
                              () -> new ConfirmedPasswordRequiredError())),
 
                 globally(
@@ -467,7 +469,8 @@ public class ExamplesUnitTest {
                             )),
 
                     required("passwordConfirmation",
-                             SignUpForm::passwordConfirmation)),
+                             SignUpForm::passwordConfirmation,
+                             identity())),
 
                 globally(
                     cond(

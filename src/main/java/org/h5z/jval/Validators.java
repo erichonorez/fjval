@@ -195,4 +195,8 @@ public final class Validators {
         return v -> sizeBetween(inclMin, inclMax, _v -> lazyE.get()).apply(v);
     }
 
+    public static <T, E> Validator<T, E> identity() {
+        return v -> valid(v);
+    }
+
 }
