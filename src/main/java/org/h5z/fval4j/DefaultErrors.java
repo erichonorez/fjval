@@ -1,15 +1,15 @@
-package org.h5z.jval;
+package org.h5z.fval4j;
+
+import static org.h5z.fval4j.DefaultErrors.ValidationError.error;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 import java.util.function.Function;
 
-import org.h5z.jval.Core.Validator;
+import org.h5z.fval4j.Core.Validator;
 
 import lombok.Value;
-
-import static org.h5z.jval.DefaultErrors.ValidationError.error;
 
 public final class DefaultErrors {
 

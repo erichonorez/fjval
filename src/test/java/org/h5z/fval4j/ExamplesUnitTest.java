@@ -1,13 +1,13 @@
-package org.h5z.jval;
+package org.h5z.fval4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.h5z.jval.Validators.*;
-import static org.h5z.jval.Core.*;
-import static org.h5z.jval.DefaultErrors.*;
-import static org.h5z.jval.DefaultErrors.ValidationError.*;
+import static org.h5z.fval4j.Core.*;
+import static org.h5z.fval4j.DefaultErrors.*;
+import static org.h5z.fval4j.DefaultErrors.ValidationError.*;
+import static org.h5z.fval4j.Validators.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
-import org.h5z.jval.Core.Validator;
+import org.h5z.fval4j.Core.Validator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

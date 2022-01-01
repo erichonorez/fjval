@@ -1,11 +1,11 @@
-package org.h5z.jval;
+package org.h5z.fval4j;
 
+import static org.h5z.fval4j.Trie.*;
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 import static org.organicdesign.fp.StaticImports.xform;
 import static org.organicdesign.fp.StaticImports.xformArray;
-import static org.h5z.jval.Trie.*;
 
 import java.util.Arrays;
 import java.util.List;

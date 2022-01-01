@@ -1,4 +1,4 @@
-package org.h5z.jval;
+package org.h5z.fval4j;
 
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;

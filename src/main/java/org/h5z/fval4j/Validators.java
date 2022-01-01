@@ -1,10 +1,10 @@
-package org.h5z.jval;
+package org.h5z.fval4j;
 
-import static org.h5z.jval.Trie.invalid;
-import static org.h5z.jval.Core.sequentially;
-import static org.h5z.jval.Core.any;
-import static org.h5z.jval.Trie.valid;
-import static org.h5z.jval.Core.not;
+import static org.h5z.fval4j.Core.any;
+import static org.h5z.fval4j.Core.not;
+import static org.h5z.fval4j.Core.sequentially;
+import static org.h5z.fval4j.Trie.invalid;
+import static org.h5z.fval4j.Trie.valid;
 
 import java.util.Collection;
 import java.util.Set;
@@ -12,7 +12,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
-import org.h5z.jval.Core.Validator;
+import org.h5z.fval4j.Core.Validator;
 
 public final class Validators {
 

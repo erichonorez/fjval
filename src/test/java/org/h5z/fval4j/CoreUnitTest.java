@@ -1,22 +1,22 @@
-package org.h5z.jval;
+package org.h5z.fval4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.h5z.jval.Core.every;
-import static org.h5z.jval.Core.keyed;
-import static org.h5z.jval.Core.list;
-import static org.h5z.jval.Core.prop;
-import static org.h5z.jval.Core.sequentially;
-import static org.h5z.jval.Core.required;
-import static org.h5z.jval.Core.optional;
-import static org.h5z.jval.Trie.trie;
-import static org.h5z.jval.Trie.valid;
-import static org.h5z.jval.Trie.invalid;
-import static org.h5z.jval.Validators.gt;
+import static org.h5z.fval4j.Core.every;
+import static org.h5z.fval4j.Core.keyed;
+import static org.h5z.fval4j.Core.list;
+import static org.h5z.fval4j.Core.optional;
+import static org.h5z.fval4j.Core.prop;
+import static org.h5z.fval4j.Core.required;
+import static org.h5z.fval4j.Core.sequentially;
+import static org.h5z.fval4j.Trie.invalid;
+import static org.h5z.fval4j.Trie.trie;
+import static org.h5z.fval4j.Trie.valid;
+import static org.h5z.fval4j.Validators.gt;
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 
-import org.h5z.jval.Core.Validator;
+import org.h5z.fval4j.Core.Validator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

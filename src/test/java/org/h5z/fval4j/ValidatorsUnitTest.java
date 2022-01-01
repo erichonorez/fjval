@@ -1,7 +1,7 @@
-package org.h5z.jval;
+package org.h5z.fval4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.h5z.jval.Validators.required;
+import static org.h5z.fval4j.Validators.required;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
 import org.junit.jupiter.api.DisplayName;
