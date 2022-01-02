@@ -66,6 +66,12 @@ public final class Core {
         return keyed(Trie.ROOT_KEY, validator);
     }
 
+    public static <T, E> Validator<T, E> sequentially(List<Validator<T, E>> validators) {
+        return v -> {
+            return recurSequentially(v, xform(validators).toImList(), trie(vec(), map()));
+        };
+    }
+
     /**
      * <b>Combinator</b> - Creates a validator that will execute sequentially the
      * given validators and return the errors of the first failed validator. The
@@ -80,9 +86,7 @@ public final class Core {
      */
     @SafeVarargs
     public static <T, E> Validator<T, E> sequentially(Validator<T, E>... validators) {
-        return v -> {
-            return recurSequentially(v, xformArray(validators).toImList(), trie(vec(), map()));
-        };
+        return sequentially(Arrays.asList(validators));
     }
 
     private static <T, E> Trie<E> recurSequentially(T value, ImList<Validator<T, E>> validators, Trie<E> acc) {
