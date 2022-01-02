@@ -5,7 +5,6 @@ import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 import static org.organicdesign.fp.StaticImports.xform;
-import static org.organicdesign.fp.StaticImports.xformArray;
 
 import java.util.Arrays;
 import java.util.List;
