@@ -3,7 +3,7 @@ package org.h5z.fval4j;
 import static org.h5z.fval4j.DefaultErrors.ValidationError.error;
 
 import java.util.Arrays;
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -71,7 +71,7 @@ public final class DefaultErrors {
         return Validators.equals(b, v -> error(VALUE_NOT_EQUAL_TO, b, v));
     }
 
-    public static <E> Validator<Collection<?>, ValidationError> sizeBetween(int inclMin, int inclMax) {
+    public static <T, E> Validator<List<T>, ValidationError> sizeBetween(int inclMin, int inclMax) {
         return Validators.sizeBetween(inclMin, inclMax, v -> error(COLLECTION_SIZE_NOT_BETWEEN_BOUNDS, inclMax, inclMax, v.size()));
      }
 

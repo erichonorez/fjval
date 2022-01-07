@@ -6,7 +6,7 @@ import static org.h5z.fval4j.Core.sequentially;
 import static org.h5z.fval4j.Trie.invalid;
 import static org.h5z.fval4j.Trie.valid;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -182,7 +182,7 @@ public final class Validators {
 
     // Collections validation
 
-    public static <E> Validator<Collection<?>, E> sizeBetween(int inclMin, int inclMax, Function<Collection<?>, E> errorFn) {
+    public static <T, E> Validator<List<T>, E> sizeBetween(int inclMin, int inclMax, Function<List<T>, E> errorFn) {
         return v -> {
             if (v.size() >= inclMin && v.size() <= inclMax) {
                 return valid(v);
@@ -191,8 +191,8 @@ public final class Validators {
         };
     }
 
-    public static <E> Validator<Collection<?>, E> sizeBetween(int inclMin, int inclMax, Supplier<E> lazyE) {
-        return v -> sizeBetween(inclMin, inclMax, _v -> lazyE.get()).apply(v);
+    public static <T, E> Validator<List<T>, E> sizeBetween(int inclMin, int inclMax, Supplier<E> lazyE) {
+        return sizeBetween(inclMin, inclMax, _v -> lazyE.get());
     }
 
     public static <T, E> Validator<T, E> identity() {
