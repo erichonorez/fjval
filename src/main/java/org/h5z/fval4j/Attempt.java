@@ -46,8 +46,6 @@ public final class Attempt {
         public static <E, T> ValidationResult<E, T> identity() {
             return new ValidationResult<>(trie(vec(), map()), null);
         }
-
-        // implement applicative
     }
 
     // keep the last U
