@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.h5z.fval4j.Validators.required;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
+import org.h5z.fval4j.data.ValidationResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ public class ValidatorsUnitTest {
         @Test
         @DisplayName("Should fail if the value is null")
         public void test() {
-            Trie<String> result = required(() -> "Required").apply(null);
+            ValidationResult<String, Object, Object> result = required(() -> "Required").apply("");
 
             assertAll(
                 () -> assertThat(result.isInvalid()).isTrue(),

@@ -7,6 +7,7 @@ import static org.h5z.fval4j.DefaultErrors.ValidationError.*;
 import static org.h5z.fval4j.Validators.*;
 import static org.junit.jupiter.api.Assertions.assertAll;
 
+import org.h5z.fval4j.data.ValidationResult;
 import org.h5z.fval4j.Core.Validator;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -27,7 +28,7 @@ public class ExamplesUnitTest {
         // The validator must apply all the validators (no fail-fast).
         @Test
         void example0() {
-            Validator<String, String> usernameValidator = every( // 'every' will execute all the validator even one of
+            Validator<String, String, String> usernameValidator = every( // 'every' will execute all the validator even one of
                                                                  // them fails
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                     lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
@@ -35,9 +36,9 @@ public class ExamplesUnitTest {
             assertAll(
 
                     () -> {
-                        Trie<String> result = usernameValidator.validate("");
+                        ValidationResult<String, String, String> result = usernameValidator.validate("");
                         assertThat(result)
-                            .matches(Trie::isInvalid);
+                            .matches(ValidationResult::isInvalid);
                         
                         assertThat(result.getErrors())
                             .containsOnly(
@@ -46,16 +47,16 @@ public class ExamplesUnitTest {
                     },
 
                     () -> {
-                        Trie<String> result = usernameValidator.validate("this is invalid");
+                        ValidationResult<String, String, String> result = usernameValidator.validate("this is invalid");
                         assertThat(result)
-                            .matches(Trie::isInvalid);
+                            .matches(ValidationResult::isInvalid);
                         
                         assertThat(result.getErrors())
                             .containsOnly("It must only contain alphanumeric characters and '_'");
                     },
 
                     () -> assertThat(usernameValidator.validate("myUserName_76"))
-                            .matches(Trie::isValid));
+                            .matches(ValidationResult::isValid));
         }
 
         // We want to validate a password
@@ -64,7 +65,7 @@ public class ExamplesUnitTest {
         // The validator must fail at the first failed validator (fail-fast).
         @Test
         void example1() {
-            Validator<String, String> passwordValidator = sequentially( // 'sequentially' will execute all the validator
+            Validator<String, String, String> passwordValidator = sequentially( // 'sequentially' will execute all the validator
                                                                         // and stop at the first failed validator
                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                             () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
@@ -73,9 +74,9 @@ public class ExamplesUnitTest {
             assertAll(
 
                     () -> { 
-                        Trie<String> result = passwordValidator.validate("");
+                        ValidationResult<String, String, String> result = passwordValidator.validate("");
                         assertThat(result)
-                            .matches(Trie::isInvalid);
+                            .matches(ValidationResult::isInvalid);
                         
                         assertThat(result.getErrors())
                             .containsOnly(
@@ -83,9 +84,9 @@ public class ExamplesUnitTest {
                     },
 
                     () -> {
-                        Trie<String> result = passwordValidator.validate("Short!8");
+                        ValidationResult<String, String, String> result = passwordValidator.validate("Short!8");
                         assertThat(result)
-                            .matches(Trie::isInvalid);
+                            .matches(ValidationResult::isInvalid);
 
                         assertThat(result.getErrors())
                             .containsOnly("The length must be between 8 and 42");
@@ -93,7 +94,7 @@ public class ExamplesUnitTest {
 
                     () -> { 
                         assertThat(passwordValidator.validate("P4ssW0rd!42"))
-                            .matches(Trie::isValid);
+                            .matches(ValidationResult::isValid);
                     }
             );
         }
@@ -108,25 +109,25 @@ public class ExamplesUnitTest {
         
                 @Test
                 void example2() {
-                    Validator<String, String> firstNameValidator = lengthBetween(3, 42,
+                    Validator<String, String, String> firstNameValidator = lengthBetween(3, 42,
                             () -> "The length must be between 2 and 42");
-                    Validator<String, String> lastNameValidator = firstNameValidator; // Same validation for the first name and
+                    Validator<String, String, String> lastNameValidator = firstNameValidator; // Same validation for the first name and
                                                                                     // the last name
 
-                                                                                    Validator<String, String> usernameValidator = every(
+                    Validator<String, String, String> usernameValidator = every(
                             matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                             lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
-                    Validator<String, String> passwordValidator = sequentially(
+                    Validator<String, String, String> passwordValidator = sequentially(
                             matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                     () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
                             lengthBetween(8, 42, () -> "The length must be between 8 and 42"));
 
-                    Validator<SignUpForm, String> passwordsMatchValidator = cond(
+                    Validator<SignUpForm, SignUpForm, String> passwordsMatchValidator = cond(
                             form -> form.password().equals(form.passwordConfirmation()),
                             () -> "Passwords must match");
 
-                    Validator<SignUpForm, String> formValidator = sequentially( // stops after the first failed validator
+                    Validator<SignUpForm, SignUpForm, String> formValidator = sequentially( // stops after the first failed validator
                             every(
                                     prop(SignUpForm::firstName, optional(firstNameValidator)), // first name may be null
                                     prop(SignUpForm::lastName, optional(lastNameValidator)), // last name may be null
@@ -156,7 +157,7 @@ public class ExamplesUnitTest {
                             () ->
                                 assertThat(formValidator
                                     .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "P4ssW0rd!42")))
-                                            .matches(Trie::isValid)
+                                            .matches(ValidationResult::isValid)
                     );
 
                 }
@@ -176,7 +177,7 @@ public class ExamplesUnitTest {
                  */
                 @Test
                 void example() {
-                    Validator<SignUpForm, ValidationError> formValidator = 
+                    Validator<SignUpForm, SignUpForm, ValidationError> formValidator =
                         sequentially(
                                 // The properties are all validated first
                                 every(
@@ -246,7 +247,7 @@ public class ExamplesUnitTest {
 
                             () -> assertThat(formValidator
                                     .validate(new SignUpForm("John", "Doe", "userName", "P4ssW0rd!42", "P4ssW0rd!42")))
-                                            .matches(Trie::isValid));
+                                            .matches(ValidationResult::isValid));
                 }
             }
         }
@@ -289,13 +290,13 @@ public class ExamplesUnitTest {
         @DisplayName("Simple example")
         void example0() {
             // Let's first create a validator for a user name 
-            Validator<String, String> usernameValidator = every(
+            Validator<String, String, String> usernameValidator = every(
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                     lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
             // Then we want to index the result of this validator with the key 'userName'
-            Validator<String, String> userNameKValidator = Core.keyed("userName", usernameValidator);
-            Trie<String> result = userNameKValidator.validate("");
+            Validator<String, String, String> userNameKValidator = Core.keyed("userName", usernameValidator);
+            ValidationResult<String, String, String> result = userNameKValidator.validate("");
 
             assertAll(
                 () -> assertThat(result.isInvalid()).isTrue(),
@@ -312,7 +313,7 @@ public class ExamplesUnitTest {
         @Test
         @DisplayName("Sign up form validation")
         void example1() {
-            Validator<SignUpForm, SignUpFormError> formValidator = sequentially(
+            Validator<SignUpForm, SignUpForm, SignUpFormError> formValidator = sequentially(
                 every(
                     keyed("firstName", 
                         optional(SignUpForm::firstName, 
@@ -349,7 +350,7 @@ public class ExamplesUnitTest {
                         form -> form.password().equals(form.passwordConfirmation()),
                         () -> new PasswordsDontMatchError())));
 
-            Trie<SignUpFormError> result = formValidator.validate(new SignUpForm(null, null, null, null, null));
+            ValidationResult<SignUpFormError, SignUpForm, SignUpForm> result = formValidator.validate(new SignUpForm(null, null, null, null, null));
 
             assertAll(
                 () -> assertThat(result.isInvalid())
@@ -378,7 +379,7 @@ public class ExamplesUnitTest {
         @Test
         @DisplayName("Sign up form with more concise api")
         void example2() {
-            Validator<SignUpForm, SignUpFormError> formValidator = sequentially(
+            Validator<SignUpForm, SignUpForm, SignUpFormError> formValidator = sequentially(
                 every(
                     optional("firstName", 
                              SignUpForm::firstName, 
@@ -415,7 +416,7 @@ public class ExamplesUnitTest {
                         form -> form.password().equals(form.passwordConfirmation()),
                         () -> new PasswordsDontMatchError())));
 
-            Trie<SignUpFormError> result = formValidator.validate(new SignUpForm(null, null, null, null, null));
+            ValidationResult<SignUpFormError, SignUpForm, SignUpForm> result = formValidator.validate(new SignUpForm(null, null, null, null, null));
 
             assertAll(
                 () -> assertThat(result.isInvalid())
@@ -444,7 +445,7 @@ public class ExamplesUnitTest {
         @Test
         @DisplayName("Sign up form with default errors")
         void example3() {
-            Validator<SignUpForm, DefaultErrors.ValidationError> formValidator = sequentially(
+            Validator<SignUpForm, SignUpForm, DefaultErrors.ValidationError> formValidator = sequentially(
                 every(
                     optional("firstName", 
                              SignUpForm::firstName, 
@@ -477,7 +478,7 @@ public class ExamplesUnitTest {
                         form -> form.password().equals(form.passwordConfirmation()),
                         form -> error("PasswordsDontMatch", form.password(), form.passwordConfirmation()))));
 
-            Trie<DefaultErrors.ValidationError> result = formValidator.validate(new SignUpForm(null, null, null, null, null));
+            ValidationResult<DefaultErrors.ValidationError, SignUpForm, SignUpForm> result = formValidator.validate(new SignUpForm(null, null, null, null, null));
 
             assertAll(
                 () -> assertThat(result.isInvalid())

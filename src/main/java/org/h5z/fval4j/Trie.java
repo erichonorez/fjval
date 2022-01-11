@@ -266,4 +266,8 @@ public class Trie<E> {
     public static <E> Trie<E> trie(List<E> errors, Map<String, Trie<E>> children) {
         return new Trie<>(xform(errors).toImList(), xform(children.entrySet()).toImMap(kv -> kv));
     }
+
+    public static <E> Trie<E> identity() {
+        return trie(vec(), map());
+    }
 }

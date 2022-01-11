@@ -14,7 +14,7 @@ public final class SetValidators {
         throw new IllegalAccessError("Cannot be instantiaed");
     }
 
-    public static <V, T extends Set<V>, E> Validator<T, E> set(
+    /*public static <V, T extends Set<V>, E> Validator<T, E> set(
             Validator<V, E> validator,
             Function<V, String> keyFn,
             Function<List<Validator<V, E>>, Validator<T, E>> reducer) {
@@ -24,6 +24,6 @@ public final class SetValidators {
                 .toList();
             return reducer.apply(validators).apply(s);
         };
-    }
+    }*/
     
 }

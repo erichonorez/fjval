@@ -8,15 +8,16 @@ import static org.h5z.fval4j.Core.optional;
 import static org.h5z.fval4j.Core.prop;
 import static org.h5z.fval4j.Core.required;
 import static org.h5z.fval4j.Core.sequentially;
-import static org.h5z.fval4j.Trie.invalid;
 import static org.h5z.fval4j.Trie.trie;
-import static org.h5z.fval4j.Trie.valid;
+import static org.h5z.fval4j.data.ValidationResult.invalid;
+import static org.h5z.fval4j.data.ValidationResult.valid;
 import static org.h5z.fval4j.Validators.gt;
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 
 import org.h5z.fval4j.Core.Validator;
+import org.h5z.fval4j.data.ValidationResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,9 +28,9 @@ public class CoreUnitTest {
     @DisplayName("keyed")
     class KeyedTest { // named KeyedTest to avoid collision with the class Keyed
 
-        Validator<String, String> containsA = s -> s.contains("a")
-                ? valid(s)
-                : invalid("Does not contains a");
+        Validator<String, String, String> containsA = s -> s.contains("a")
+                ? valid(s, s)
+                : invalid(s, "Does not contains a");
 
         @Nested
         @DisplayName("With simple validator")
@@ -38,8 +39,8 @@ public class CoreUnitTest {
             @Test
             @DisplayName("Returns a keyed validator")
             void t0() {
-                Validator<String, String> keyedContainsA = keyed("x", containsA);
-                Trie<String> validated = keyedContainsA.validate("");
+                Validator<String, String, String> keyedContainsA = keyed("x", containsA);
+                ValidationResult<String, String, String> validated = keyedContainsA.validate("");
 
                 assertThat(validated)
                         .isEqualTo(trie(vec(), map(
@@ -56,7 +57,7 @@ public class CoreUnitTest {
             @DisplayName("Returns a keyed validator")
             void t0() {
                 var yxContainsA = keyed("y", keyed("x", containsA));
-                Trie<String> validated = yxContainsA.validate("");
+                ValidationResult<String, String, String> validated = yxContainsA.validate("");
 
                 assertThat(validated)
                         .isEqualTo(trie(vec(), map(
@@ -75,11 +76,11 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns a valid trie if all validators succeed")
         void t0() {
-            Validator<Integer, String> sequentially = sequentially(
+            Validator<Integer, Integer, String> sequentially = sequentially(
                     keyed("x", gt(0, () -> "Should be gt 0")),
                     keyed("y", gt(0, () -> "Should be gt 0")));
 
-            Trie<String> result = sequentially.apply(1);
+            ValidationResult<String, Integer, Integer> result = sequentially.apply(1);
             assertThat(result)
                     .isEqualTo(trie(vec(), map(
                             tup("x", trie(vec(), map())),
@@ -89,11 +90,11 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns a trie with only the errors of the first failed validator")
         void t1() {
-            Validator<Integer, String> sequentially = sequentially(
+            Validator<Integer, Integer, String> sequentially = sequentially(
                     keyed("x", gt(2, () -> "Should be gt 2")),
                     keyed("y", gt(0, () -> "Should be gt 0")));
 
-            Trie<String> result = sequentially.apply(1);
+            ValidationResult<String, Integer, Integer> result = sequentially.apply(1);
             assertThat(result)
                     .isEqualTo(trie(vec(), map(
                             tup("x", trie(vec("Should be gt 2"), map())))));
@@ -108,11 +109,11 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns a valid trie if all validators succeeded")
         void t0() {
-            Validator<Integer, String> every = every(
+            Validator<Integer, Integer, String> every = every(
                     keyed("x", gt(0, () -> "Should be gt 0")),
                     keyed("y", gt(0, () -> "Should be gt 0")));
 
-            Trie<String> result = every.apply(1);
+            ValidationResult<String, Integer, Integer> result = every.apply(1);
             assertThat(result)
                     .isEqualTo(trie(vec(), map(
                             tup("x", trie(vec(), map())),
@@ -122,14 +123,14 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns a trie with the errors of all failed validators otherwise.")
         void t1() {
-            Validator<Integer, String> every = every(
+            Validator<Integer, Integer, String> every = every(
                     keyed("a", gt(-1, () -> "Should be gt -1")),
                     keyed("b", gt(1, () -> "Should be gt 1")),
                     keyed("c", gt(2, () -> "Should be gt 2")),
                     keyed("d", gt(3, () -> "Should be gt 3")),
                     keyed("e", gt(-1, () -> "Should be gt -1")));
 
-            Trie<String> result = every.apply(0);
+            ValidationResult<String, Integer, Integer> result = every.apply(0);
             assertThat(result)
                     .isEqualTo(trie(vec(), map(
                             tup("a", trie(vec(), map())),
@@ -145,8 +146,8 @@ public class CoreUnitTest {
     @DisplayName("prop")
     static class Prop {
 
-        Validator<Integer, String> gt0 = v -> v > 0 ? valid(v) : invalid("gt0");
-        Validator<RootClass, String> rootValidator = keyed("x",
+        Validator<Integer, Integer, String> gt0 = v -> v > 0 ? valid(v, v) : invalid(v, "gt0");
+        Validator<RootClass, Integer, String> rootValidator = keyed("x",
                 prop(RootClass::getX, keyed("y",
                         prop(NestedClass::getY, gt0))));
 
@@ -207,7 +208,7 @@ public class CoreUnitTest {
             @DisplayName("Retuns a valid trie if all the elements in the list are valid")
             void t0() {
                 
-                var listValidator = list(gt(0, () -> "Should be gt 0"), Core::every);
+                var listValidator = list(gt(0, () -> "Should be gt 0"), Core::everyEl);
                 assertThat(listValidator.apply(vec(1, 2, 3, 4, 5)))
                         .isEqualTo(trie(vec(), map(
                                 tup("0", trie(vec(), map())),
@@ -220,7 +221,7 @@ public class CoreUnitTest {
             @Test
             @DisplayName("Return a trie with the errors of all failed validators")
             void t1() {
-                var listValidator = list(gt(0, () -> "Should be gt 0"), Core::every);
+                var listValidator = list(gt(0, () -> "Should be gt 0"), Core::everyEl);
                 assertThat(listValidator.apply(vec(0, 0, 0, 0, 0)))
                         .isEqualTo(trie(vec(), map(
                                 tup("0", trie(vec("Should be gt 0"), map())),
@@ -236,14 +237,14 @@ public class CoreUnitTest {
         @DisplayName("With keyed validator")
         class WithKeyedValidator {
 
-            Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
-            Validator<Point, String> pointValidator = keyed("x", prop(Point::getX, xValidator));
-            Validator<java.util.List<Point>, String> listOfPointValidator = list(pointValidator, Core::every);
+            Validator<Integer, Integer, String> xValidator = gt(0, () -> "Should be gt 0");
+            Validator<Point, Integer, String> pointValidator = keyed("x", prop(Point::getX, xValidator));
+            Validator<java.util.List<Point>, java.util.List<Integer>, String> listOfPointValidator = list(pointValidator, Core::everyEl);
 
             @Test
             @DisplayName("Retuns a valid trie if all the elements in the list are valid")
             void t0() {
-                Trie<String> result = listOfPointValidator.apply(vec(
+                ValidationResult<String, java.util.List<Point>, java.util.List<Integer>> result = listOfPointValidator.apply(vec(
                         new Point(1),
                         new Point(1),
                         new Point(1),
@@ -305,8 +306,8 @@ public class CoreUnitTest {
     @DisplayName("required")
     class Required {
 
-        Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
-        Validator<Point, String> pointValidator = required( // the validated object `Point` is required
+        Validator<Integer, Integer, String> xValidator = gt(0, () -> "Should be gt 0");
+        Validator<Point, Integer, String> pointValidator = required( // the validated object `Point` is required
                 keyed("x", prop(Point::getX, xValidator)),
                 () -> "Required");
 
@@ -352,8 +353,8 @@ public class CoreUnitTest {
     @DisplayName("Optional")
     class Optional {
         
-        Validator<Integer, String> xValidator = gt(0, () -> "Should be gt 0");
-        Validator<Point, String> pointValidator = optional( // the validated object `Point` is optional
+        Validator<Integer, Integer, String> xValidator = gt(0, () -> "Should be gt 0");
+        Validator<Point, Integer, String> pointValidator = optional( // the validated object `Point` is optional
                 keyed("x", prop(Point::getX, xValidator))
         );
 

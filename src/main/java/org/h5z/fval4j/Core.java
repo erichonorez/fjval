@@ -6,12 +6,20 @@ import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 import static org.organicdesign.fp.StaticImports.xform;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+import org.h5z.fval4j.data.ValidationResult;
+import org.h5z.fval4j.data.Prelude.F1;
+import org.h5z.fval4j.data.Prelude.F2;
+import org.h5z.fval4j.data.Prelude.F3;
+import org.h5z.fval4j.data.Prelude.F4;
+import org.h5z.fval4j.data.Prelude.F5;
 import org.organicdesign.fp.collections.ImList;
 
 public final class Core {
@@ -21,12 +29,12 @@ public final class Core {
     }
 
     @FunctionalInterface
-    public interface Validator<T, E> extends Function<T, Trie<E>> {
+    public interface Validator<T, U, E> extends F1<T, ValidationResult<E, T, U>> {
 
         /**
          * Alias for {@link Function#apply(Object)}
          */
-        default Trie<E> validate(T t) {
+        default ValidationResult<E, T, U> validate(T t) {
             return this.apply(t);
         }
 
@@ -48,8 +56,14 @@ public final class Core {
      * 
      * @return
      */
-    public static <T, E> Validator<T, E> keyed(String key, Validator<T, E> validator) {
-        return v -> trie(vec(), map(tup(key, validator.apply(v))));
+    public static <T, U, E> Validator<T, U, E> keyed(String key, Validator<T, U, E> validator) {
+        return v -> { 
+            ValidationResult<E, T, U> apply = validator.apply(v);
+            return new ValidationResult<E, T, U>(
+                trie(vec(), map(tup(key, apply._1()))),
+                apply._2(),
+                apply._3()); 
+        };
     }
 
     /**
@@ -61,13 +75,13 @@ public final class Core {
      * @param validator the validator to execute
      * @return          a keyed validator.
      */
-    public static <T, E> Validator<T, E> globally(Validator<T, E> validator) { 
+    public static <T, U, E> Validator<T, U, E> globally(Validator<T, U, E> validator) { 
         return keyed(Trie.ROOT_KEY, validator);
     }
 
-    public static <T, E> Validator<T, E> sequentially(List<Validator<T, E>> validators) {
+    public static <T, U, E> Validator<T, U, E> sequentially(List<Validator<T, U, E>> validators) {
         return v -> {
-            return recurSequentially(v, xform(validators).toImList(), trie(vec(), map()));
+            return recurSequentially(v, xform(validators).toImList(), ValidationResult.identity());
         };
     }
 
@@ -84,15 +98,19 @@ public final class Core {
      *         of the first failed validator otherwise.
      */
     @SafeVarargs
-    public static <T, E> Validator<T, E> sequentially(Validator<T, E>... validators) {
+    public static <T, U, E> Validator<T, U, E> sequentially(Validator<T, U, E>... validators) {
         return sequentially(Arrays.asList(validators));
     }
 
-    private static <T, E> Trie<E> recurSequentially(T value, ImList<Validator<T, E>> validators, Trie<E> acc) {
+    private static <T, U, E> ValidationResult<E, T, U> recurSequentially(T value, ImList<Validator<T, U, E>> validators, ValidationResult<E, T, U> acc) {
         return validators.head()
                 .match(v -> {
-                    Trie<E> validated = v.validate(value);
-                    Trie<E> newAcc = acc.merge(validated);
+                    ValidationResult<E, T, U> validated = v.validate(value);
+                    ValidationResult<E, T, U> newAcc = new ValidationResult<>(
+                        acc._1().merge(validated._1()),
+                        validated._2(),
+                        validated._3());
+                    
                     if (validated.isInvalid()) {
                         return newAcc;
                     }
@@ -123,28 +141,110 @@ public final class Core {
      *         all failed validators otherwise.
      */
     @SafeVarargs
-    public static <K, E> Validator<K, E> every(Validator<K, E>... validators) {
+    public static <T, U, E> Validator<T, U, E> every(Validator<T, U, E>... validators) {
         return every(vec(validators));
     }
 
     /**
      * @see {@link Core#every(Validator...)}
      */
-    public static <K, E> Validator<K, E> every(List<Validator<K, E>> validators) {
+    public static <T, U, E> Validator<T, U, E> every(List<Validator<T, U, E>> validators) {
         return v -> xform(validators)
                 .map(fn -> fn.apply(v))
-                .fold(trie(vec(), map()), (a, b) -> a.merge(b));
+                .fold(
+                    ValidationResult.identity(),
+                    (a, b) -> new ValidationResult<>(
+                        a._1().merge(b._1()),
+                        b._2(),
+                        b._3()));
+    }
+
+    public static <T, U1, U2, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, F2<U1, U2, X> fn) {
+        return t -> { 
+            ValidationResult<E, T, U1> apply0 = v0.apply(t);
+            ValidationResult<E, T, U2> apply1 = v1.apply(t);
+            if (apply0.isValid() && apply1.isValid()) {
+                return new ValidationResult<E, T, X>(
+                    apply0._1().merge(apply1._1()),
+                    t,
+                    fn.apply(apply0._3(), apply1._3())
+                );
+            }
+            return new ValidationResult<E, T, X>(apply0._1().merge(apply1._1()), t, null);
+        };
+    }
+
+    public static <T, U1, U2, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1) {
+        return t -> every(v0, v1, (_a, _b) -> t).apply(t);
+    }
+
+    public static <T, U1, U2, U3, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, F3<U1, U2, U3, X> fn) {
+        return t -> { 
+            ValidationResult<E, T, U1> apply0 = v0.apply(t);
+            ValidationResult<E, T, U2> apply1 = v1.apply(t);
+            ValidationResult<E, T, U3> apply2 = v2.apply(t);
+
+            if (apply0.isValid() && apply1.isValid() && apply2.isValid()) {
+                return new ValidationResult<E, T, X>(
+                    apply0._1().merge(apply1._1()),
+                    t,
+                    fn.apply(apply0._3(), apply1._3(), apply2._3())
+                );
+            }
+            return new ValidationResult<E, T, X>(apply0._1().merge(apply1._1()), t, null);
+        };
+    }
+
+    public static <T, U1, U2, U3, U4, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, F4<U1, U2, U3, U4, X> fn) {
+        return t -> { 
+            ValidationResult<E, T, U1> apply0 = v0.apply(t);
+            ValidationResult<E, T, U2> apply1 = v1.apply(t);
+            ValidationResult<E, T, U3> apply2 = v2.apply(t);
+            ValidationResult<E, T, U4> apply3 = v3.apply(t);
+
+            if (apply0.isValid() && apply1.isValid() && apply2.isValid() && apply3.isValid()) {
+                return new ValidationResult<E, T, X>(
+                    apply0._1().merge(apply1._1()),
+                    t,
+                    fn.apply(apply0._3(), apply1._3(), apply2._3(), apply3._3())
+                );
+            }
+            return new ValidationResult<E, T, X>(apply0._1().merge(apply1._1()), t, null);
+        };
+    }
+
+    public static <T, U1, U2, U3, U4, U5, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, F5<U1, U2, U3, U4, U5, X> fn) {
+        return t -> { 
+            ValidationResult<E, T, U1> apply0 = v0.apply(t);
+            ValidationResult<E, T, U2> apply1 = v1.apply(t);
+            ValidationResult<E, T, U3> apply2 = v2.apply(t);
+            ValidationResult<E, T, U4> apply3 = v3.apply(t);
+            ValidationResult<E, T, U5> apply4 = v4.apply(t);
+
+            if (apply0.isValid() && apply1.isValid() && apply2.isValid() && apply3.isValid() && apply4.isValid()) {
+                return new ValidationResult<E, T, X>(
+                    apply0._1().merge(apply1._1()),
+                    t,
+                    fn.apply(apply0._3(), apply1._3(), apply2._3(), apply3._3(), apply4._3())
+                );
+            }
+            return new ValidationResult<E, T, X>(apply0._1().merge(apply1._1()), t, null);
+        };
+    }
+
+    public static <T, U1, U2, U3, U4, U5, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4) {
+        return t -> every(v0, v1, v2, v3, v4, (_1, _2, _3, _4, _5) -> t).apply(t);
     }
 
     
-    public static <T, E> Validator<T, E> any(List<Validator<T, E>> validators) {
+    public static <T, U, E> Validator<T, U, E> any(List<Validator<T, U, E>> validators) {
         return v -> {
             if (validators.size() == 0) {
-                return valid(v);
+                return ValidationResult.identity();
             } else if (validators.size() == 1) {
                 return validators.get(0).apply(v);
             } else {
-                Trie<E> result = validators.get(0).apply(v);
+                ValidationResult<E, T, U> result = validators.get(0).apply(v);
                 if (result.isInvalid()) {
                     return result;
                 } else {
@@ -155,15 +255,20 @@ public final class Core {
     }
 
     @SafeVarargs
-    public static <T, E> Validator<T, E> any(Validator<T, E>... validators) {
+    public static <T, U, E> Validator<T, U, E> any(Validator<T, U, E>... validators) {
         return any(Arrays.asList(validators));
     }
 
-    public static <T, E> Validator<T, E> not(Validator<T, E> validator, Function<T, E> errorFn) {
-        return v -> validator.apply(v).isValid() ? invalid(errorFn.apply(v)) : valid(v);
+    public static <T, U, E> Validator<T, U, E> not(Validator<T, U, E> validator, Function<T, E> errorFn) {
+        return v -> {
+            ValidationResult<E, T, U> result = validator.apply(v);
+            return result.isValid() 
+                ? ValidationResult.invalid(result._2(), errorFn.apply(v)) 
+                : ValidationResult.<E, T, U> valid(result._3(), result._2());
+        };
     }
 
-    public static <T, E> Validator<T, E> not(Validator<T, E> validator, Supplier<E> lazyE) {
+    public static <T, U, E> Validator<T, U, E> not(Validator<T, U, E> validator, Supplier<E> lazyE) {
         return not(validator, _v -> lazyE.get());
     }
 
@@ -183,8 +288,11 @@ public final class Core {
      * @return a valid trie if the given validator succeeded. A trie containing the
      *         collected errors otherwise.
      */
-    public static <O, T, E> Validator<O, E> prop(Function<O, T> fn, Validator<T, E> validator) {
-        return x -> validator.apply(fn.apply(x));
+    public static <O, T, U, E> Validator<O, U, E> prop(Function<O, T> fn, Validator<T, U, E> validator) {
+        return x -> { 
+            ValidationResult<E, T, U> result = validator.apply(fn.apply(x));
+            return new ValidationResult<E,O,U>(result._1(), x, result._3());
+        };
     }
 
     /**
@@ -199,22 +307,51 @@ public final class Core {
      * @param <T>       the type of the list
      * @param <E>       the type of errors returned by the validator
      * @param validator the validator to apply to all elements of a list
-     * @param reducer   a function reducing a List<KeyedValidator<T, E>> to a
-     *                  KeyedValidator<T, E>
+     * @param reducer   a function reducing a List<KeyedValidator<T, U, E>> to a
+     *                  KeyedValidator<T, U, E>
      * 
      * @return a valid trie if the given validator succeeded. A trie containing the
      *         collected errors otherwise.
      */
-    public static <V, T extends List<V>, E> Validator<T, E> list(
-            Validator<V, E> validator,
-            Function<List<Validator<T, E>>, Validator<T, E>> reducer) {
+    public static <V, T extends List<V>, U, E> Validator<T, List<U>, E> list(
+            Validator<V, U, E> validator,
+            F1<List<Validator<T, U, E>>, Validator<T, List<U>, E>> reducer) {
         return t -> {
-            List<Validator<T, E>> validators = IntStream
+            List<Validator<T, U, E>> validators = IntStream
                     .range(0, t.size())
-                    .mapToObj(i -> keyed(String.valueOf(i), (T xs) -> validator.apply(xs.get(i))))
+                    .mapToObj(i -> keyed(String.valueOf(i), (T xs) -> {
+                        ValidationResult<E, V, U> result = validator.apply(xs.get(i));
+                        return new ValidationResult<>(
+                            result._1(),
+                            xs,
+                            result._3());
+                    }))
                     .toList();
             return reducer.apply(validators).apply(t);
         };
+    }
+
+    public static <V, T extends List<V>, U, E> Validator<T, List<U>, E> everyEl(List<Validator<T, U, E>> validators) {
+        return xs -> {
+            return validators.stream()
+                .map(v -> v.apply(xs))
+                .map(r -> r.mapValue(v -> vec(v)))
+                .reduce(new ValidationResult<>(Trie.identity(), xs, vec()), (a, b) -> {
+                    return new ValidationResult<>(
+                        a._1().merge(b._1()),
+                        a._2(),
+                        a._3().concat(b._3())
+                    );
+                }).mapValue(v -> new ArrayList<>(v));
+        };
+    }
+
+    public static <T, U, V, E> Validator<T, U, E> mapValue(Validator<T, V, E> validator, F1<V, U> fn) {
+        return t -> validator.apply(t).mapValue(fn);
+    }
+
+    public static <T, U, V, E> Validator<T, U, E> mapInput(Validator<T, V, E> validator, F1<T, U> fn) {
+        return t -> validator.apply(t).mapValue(_v -> fn.apply(t));
     }
 
     /**
@@ -234,16 +371,16 @@ public final class Core {
      *         validated value is not null and invalid.
      *         Returns an valid trie if the validated value is not null and valid
      */
-    public static <K, E> Validator<K, E> required(Validator<K, E> validator, Supplier<E> lazyE) {
+    public static <T, U, E> Validator<T, U, E> required(Validator<T, U, E> validator, Supplier<E> lazyE) {
         return x -> {
             if (null == x) {
-                return trie(vec(lazyE.get()), map());
+                return new ValidationResult<>(trie(vec(lazyE.get()), map()), x, null);
             }
             return validator.apply(x);
         };
     }
 
-    public static <O, T, E> Validator<O, E> required(Function<O, T> fn, Validator<T, E> validator, Supplier<E> lazyE) {
+    public static <O, T, U, E> Validator<O, U, E> required(Function<O, T> fn, Validator<T, U, E> validator, Supplier<E> lazyE) {
         return prop(fn, required(validator, lazyE));
     }
 
@@ -261,14 +398,14 @@ public final class Core {
      * @return          a {@link Validator} that returns the given error if the extracted value <code>T</code>
      *                  from <code>O</code> is null. Returns the result of the given validator otherwise.
      */
-    public static <O, T, E> Validator<O, E> required(String key, 
+    public static <O, T, U, E> Validator<O, U, E> required(String key, 
                                                      Function<O, T> fn, 
-                                                     Validator<T, E> validator, 
+                                                     Validator<T, U, E> validator, 
                                                      Supplier<E> lazyE) {
         return keyed(key, required(fn, validator, lazyE));
     }
 
-    public static <O, T, E> Validator<O, E> optional(Function<O, T> fn, Validator<T, E> validator) {
+    public static <O, T, U, E> Validator<O, U, E> optional(Function<O, T> fn, Validator<T, U, E> validator) {
         return prop(fn, optional(validator));
     }
 
@@ -287,9 +424,9 @@ public final class Core {
      *                  value <code>T</code> from <code>O</code> is null.
      *                  Returns the result of the given validator otherwise.
      */
-    public static <O, T, E> Validator<O, E> optional(String key, 
+    public static <O, T, U, E> Validator<O, U, E> optional(String key, 
                                                           Function<O, T> fn, 
-                                                          Validator<T, E> validator) {
+                                                          Validator<T, U, E> validator) {
         return keyed(key, optional(fn, validator));
 
     }
@@ -305,10 +442,10 @@ public final class Core {
      * 
      * @return           Returns a valid trie if the validated value is null.
      */
-    public static <T, E> Validator<T, E> optional(Validator<T, E> validator) {
+    public static <T, U, E> Validator<T, U, E> optional(Validator<T, U, E> validator) {
         return x -> {
             if (null == x) {
-                return trie(vec(), map());
+                return new ValidationResult<>(trie(vec(), map()), x, null);
             }
             return validator.apply(x);
         };

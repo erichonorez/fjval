@@ -3,10 +3,12 @@ package org.h5z.fval4j.data;
 import java.io.Serializable;
 
 public final class Prelude {
- 
+
     @FunctionalInterface
     public interface F1<A, R> {
         R apply(A a);
+
+        public static <A> F1<A, A> identity() { return a -> a; }
     }
 
     @FunctionalInterface

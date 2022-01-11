@@ -12,7 +12,7 @@ public final class MapValidators {
         throw new IllegalAccessError("Cannot be instanciated");
     }
 
-    public static <K, T> Validator<Map<K, T>, ValidationError> hasKey(K key) {
+    public static <K, T> Validator<Map<K, T>, Map<K, T>, ValidationError> hasKey(K key) {
         return org.h5z.fval4j.validators.MapValidators.hasKey(key, () -> ValidationError.error("KeyNotFound"));
     }
 
