@@ -5,14 +5,19 @@ import java.io.Serializable;
 public final class Prelude {
 
     @FunctionalInterface
-    public interface F1<A, R> {
-        R apply(A a);
-
-        public static <A> F1<A, A> identity() { return a -> a; }
+    public interface Fn0<R> {
+        R apply();
     }
 
     @FunctionalInterface
-    public interface F2<A, B, R> {
+    public interface Fn1<A, R> {
+        R apply(A a);
+
+        public static <A> Fn1<A, A> identity() { return a -> a; }
+    }
+
+    @FunctionalInterface
+    public interface Fn2<A, B, R> {
         R apply(A a, B b);
     }
 
@@ -22,27 +27,27 @@ public final class Prelude {
     }
 
     @FunctionalInterface
-    public interface F4<A, B, C, D, R> {
+    public interface Fn4<A, B, C, D, R> {
         R apply(A a, B b, C c, D d);
     }
 
     @FunctionalInterface
-    public interface F5<A, B, C, D, E, R> {
+    public interface Fn5<A, B, C, D, E, R> {
         R apply(A a, B b, C c, D d, E e);
     }
 
     @FunctionalInterface
-    public interface F6<A, B, C, D, E, F$, R> {
+    public interface Fn6<A, B, C, D, E, F$, R> {
         R apply(A a, B b, C c, D d, E e, F$ f);
     }
 
     @FunctionalInterface
-    public interface F7<A, B, C, D, E, F$, G, R> {
+    public interface Fn7<A, B, C, D, E, F$, G, R> {
         R apply(A a, B b, C c, D d, E e, F$ f, G g);
     }
 
     @FunctionalInterface
-    public interface F8<A, B, C, D, E, F$, G, H, R> {
+    public interface Fn8<A, B, C, D, E, F$, G, H, R> {
         R apply(A a, B b, C c, D d, E e, F$ f, G g, H h);
     }
 

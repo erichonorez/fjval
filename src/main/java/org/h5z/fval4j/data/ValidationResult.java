@@ -1,7 +1,7 @@
 package org.h5z.fval4j.data;
 
 import org.h5z.fval4j.Trie;
-import org.h5z.fval4j.data.Prelude.F1;
+import org.h5z.fval4j.data.Prelude.Fn1;
 import org.h5z.fval4j.data.Prelude.Tuple3;
 
 import static org.h5z.fval4j.Trie.*;
@@ -26,15 +26,15 @@ public final class ValidationResult<E, I, V> extends Tuple3<Trie<E>, I, V> {
 
     public List<E> getErrors() { return this._1().getErrors(); }
 
-    public List<E> getErrors(List<String> path) { return null; }
+    public List<E> getErrors(List<String> path) { return this._1().getErrors(path); }
 
     public List<E> getErrors(String... path) {
         return this.getErrors(Arrays.asList(path));
     }
 
-    public boolean hasErrors(String... path) { return false; }
+    public boolean hasErrors(String... path) { return this._1().hasErrors(path); }
 
-    public <U> ValidationResult<E, I, U> mapValue(F1<V, U> fn) {
+    public <U> ValidationResult<E, I, U> mapValue(Fn1<V, U> fn) {
         return new ValidationResult<>(
             this._1(),
             this._2(),
@@ -42,12 +42,25 @@ public final class ValidationResult<E, I, V> extends Tuple3<Trie<E>, I, V> {
         );
     }
 
+    @Override
+    public String toString() {
+        return new StringBuilder()
+                        .append("{ trie: ")
+                        .append(this._1() != null ? this._1().toString() : "null")
+                        .append(", input: ")
+                        .append(this._2()!= null ? this._2().toString() : "null")
+                        .append(", value:")
+                        .append(this._3()!= null ? this._3().toString() : "null")
+                        .append(" }")
+                        .toString();
+    }
+
     public static <E, I, V> ValidationResult<E, I, V> valid(V v, I i) {
-        return new ValidationResult<>(Trie.valid(v), null, v);
+        return new ValidationResult<>(Trie.valid(v), i, v);
     }
 
     public static <E, I, V> ValidationResult<E, I, V> valid(String key, V v, I i) {
-        return new ValidationResult<>(Trie.valid(key, v), null, v);
+        return new ValidationResult<>(Trie.valid(key, v), i, v);
     }
 
     public static <E, I, V> ValidationResult<E, I, V> invalid(I i, E e) {
@@ -60,6 +73,10 @@ public final class ValidationResult<E, I, V> extends Tuple3<Trie<E>, I, V> {
 
     public static <E, I, V> ValidationResult<E, I, V> identity() {
         return new ValidationResult<>(trie(vec(), map()), null, null);
+    }
+
+    public static <E, I, V> ValidationResult<E, I, V> validationResult(Trie<E> e, I i, V v) {
+        return new ValidationResult<E,I,V>(e, i, v);
     }
 
 }

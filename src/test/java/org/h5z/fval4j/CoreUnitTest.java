@@ -11,16 +11,21 @@ import static org.h5z.fval4j.Core.sequentially;
 import static org.h5z.fval4j.Trie.trie;
 import static org.h5z.fval4j.data.ValidationResult.invalid;
 import static org.h5z.fval4j.data.ValidationResult.valid;
+import static org.h5z.fval4j.data.ValidationResult.validationResult;
 import static org.h5z.fval4j.Validators.gt;
 import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 
+import java.util.Arrays;
+
 import org.h5z.fval4j.Core.Validator;
 import org.h5z.fval4j.data.ValidationResult;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.organicdesign.fp.collections.ImList;
 
 public class CoreUnitTest {
 
@@ -43,8 +48,12 @@ public class CoreUnitTest {
                 ValidationResult<String, String, String> validated = keyedContainsA.validate("");
 
                 assertThat(validated)
-                        .isEqualTo(trie(vec(), map(
-                                tup("x", trie(vec("Does not contains a"), map())))));
+                        .isEqualTo(
+                            validationResult(
+                                trie(vec(), map(
+                                    tup("x", trie(vec("Does not contains a"), map())))),
+                                "",
+                                null));
             }
 
         }
@@ -60,9 +69,13 @@ public class CoreUnitTest {
                 ValidationResult<String, String, String> validated = yxContainsA.validate("");
 
                 assertThat(validated)
-                        .isEqualTo(trie(vec(), map(
-                                tup("y", trie(vec(), map(
-                                        tup("x", trie(vec("Does not contains a"), map()))))))));
+                        .isEqualTo(
+                            validationResult(
+                                trie(vec(), map(
+                                    tup("y", trie(vec(), map(
+                                        tup("x", trie(vec("Does not contains a"), map()))))))),
+                                "",
+                                null));
             }
 
         }
@@ -82,9 +95,13 @@ public class CoreUnitTest {
 
             ValidationResult<String, Integer, Integer> result = sequentially.apply(1);
             assertThat(result)
-                    .isEqualTo(trie(vec(), map(
-                            tup("x", trie(vec(), map())),
-                            tup("y", trie(vec(), map())))));
+                    .isEqualTo(
+                        validationResult(
+                            trie(vec(), map(
+                                tup("x", trie(vec(), map())),
+                                tup("y", trie(vec(), map())))),
+                            1,
+                            1));
         }
 
         @Test
@@ -96,8 +113,12 @@ public class CoreUnitTest {
 
             ValidationResult<String, Integer, Integer> result = sequentially.apply(1);
             assertThat(result)
-                    .isEqualTo(trie(vec(), map(
-                            tup("x", trie(vec("Should be gt 2"), map())))));
+                    .isEqualTo(
+                        validationResult(
+                            trie(vec(), map(
+                                tup("x", trie(vec("Should be gt 2"), map())))),
+                            1,
+                            null));
         }
 
     }
@@ -115,9 +136,13 @@ public class CoreUnitTest {
 
             ValidationResult<String, Integer, Integer> result = every.apply(1);
             assertThat(result)
-                    .isEqualTo(trie(vec(), map(
-                            tup("x", trie(vec(), map())),
-                            tup("y", trie(vec(), map())))));
+                    .isEqualTo( 
+                        validationResult(
+                            trie(vec(), map(
+                                tup("x", trie(vec(), map())),
+                                tup("y", trie(vec(), map())))),
+                            1,
+                            1));
         }
 
         @Test
@@ -132,12 +157,16 @@ public class CoreUnitTest {
 
             ValidationResult<String, Integer, Integer> result = every.apply(0);
             assertThat(result)
-                    .isEqualTo(trie(vec(), map(
-                            tup("a", trie(vec(), map())),
-                            tup("b", trie(vec("Should be gt 1"), map())),
-                            tup("c", trie(vec("Should be gt 2"), map())),
-                            tup("d", trie(vec("Should be gt 3"), map())),
-                            tup("e", trie(vec(), map())))));
+                    .isEqualTo(
+                        validationResult(
+                            trie(vec(), map(
+                                tup("a", trie(vec(), map())),
+                                tup("b", trie(vec("Should be gt 1"), map())),
+                                tup("c", trie(vec("Should be gt 2"), map())),
+                                tup("d", trie(vec("Should be gt 3"), map())),
+                                tup("e", trie(vec(), map())))),
+                            0,
+                            null));
         }
 
     }
@@ -154,19 +183,28 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns a valid trie if the given validator succeeded")
         void t0() {
+            RootClass a = new RootClass(new NestedClass(1));
             assertThat(
-                    rootValidator.apply(new RootClass(new NestedClass(1))))
-                            .isEqualTo(trie(vec(), map(tup("x", trie(vec(), map(tup("y", trie(vec(), map()))))))));
+                    rootValidator.apply(a))
+                            .isEqualTo(
+                                validationResult(
+                                    trie(vec(), map(tup("x", trie(vec(), map(tup("y", trie(vec(), map()))))))),
+                                    a,
+                                    1));
         }
 
         @Test
         @DisplayName("Returns the errors return by the given validator otherwise")
         void t1() {
+            RootClass a = new RootClass(new NestedClass(0));
             assertThat(
-                    rootValidator.apply(new RootClass(new NestedClass(0)))).isEqualTo(
-                            trie(vec(), map(
+                    rootValidator.apply(a)).isEqualTo(
+                            validationResult(
+                                trie(vec(), map(
                                     tup("x", trie(vec(), map(
-                                            tup("y", trie(vec("gt0"), map()))))))));
+                                            tup("y", trie(vec("gt0"), map()))))))),
+                                a,
+                                null));
 
         }
 
@@ -209,26 +247,37 @@ public class CoreUnitTest {
             void t0() {
                 
                 var listValidator = list(gt(0, () -> "Should be gt 0"), Core::everyEl);
-                assertThat(listValidator.apply(vec(1, 2, 3, 4, 5)))
-                        .isEqualTo(trie(vec(), map(
-                                tup("0", trie(vec(), map())),
-                                tup("1", trie(vec(), map())),
-                                tup("2", trie(vec(), map())),
-                                tup("3", trie(vec(), map())),
-                                tup("4", trie(vec(), map())))));
+                var aList = vec(1, 2, 3, 4, 5);
+                assertThat(listValidator.apply(aList))
+                        .isEqualTo(
+                            validationResult(
+                                trie(vec(), map(
+                                    tup("0", trie(vec(), map())),
+                                    tup("1", trie(vec(), map())),
+                                    tup("2", trie(vec(), map())),
+                                    tup("3", trie(vec(), map())),
+                                    tup("4", trie(vec(), map())))),
+                                aList,
+                                aList  
+                        ));
             }
 
             @Test
             @DisplayName("Return a trie with the errors of all failed validators")
             void t1() {
                 var listValidator = list(gt(0, () -> "Should be gt 0"), Core::everyEl);
-                assertThat(listValidator.apply(vec(0, 0, 0, 0, 0)))
-                        .isEqualTo(trie(vec(), map(
-                                tup("0", trie(vec("Should be gt 0"), map())),
-                                tup("1", trie(vec("Should be gt 0"), map())),
-                                tup("2", trie(vec("Should be gt 0"), map())),
-                                tup("3", trie(vec("Should be gt 0"), map())),
-                                tup("4", trie(vec("Should be gt 0"), map())))));
+                var aList = vec(0, 0, 0, 0, 0);
+                assertThat(listValidator.apply(aList))
+                        .isEqualTo(
+                            validationResult(
+                                trie(vec(), map(
+                                    tup("0", trie(vec("Should be gt 0"), map())),
+                                    tup("1", trie(vec("Should be gt 0"), map())),
+                                    tup("2", trie(vec("Should be gt 0"), map())),
+                                    tup("3", trie(vec("Should be gt 0"), map())),
+                                    tup("4", trie(vec("Should be gt 0"), map())))),
+                                aList,
+                                vec(null, null, null, null, null)));
             }
 
         }
@@ -244,45 +293,57 @@ public class CoreUnitTest {
             @Test
             @DisplayName("Retuns a valid trie if all the elements in the list are valid")
             void t0() {
-                ValidationResult<String, java.util.List<Point>, java.util.List<Integer>> result = listOfPointValidator.apply(vec(
+                @NotNull
+                ImList<Point> points = vec(
                         new Point(1),
                         new Point(1),
                         new Point(1),
                         new Point(1),
-                        new Point(1)));
+                        new Point(1));
+                ValidationResult<String, java.util.List<Point>, java.util.List<Integer>> result = listOfPointValidator.apply(points);
 
-                assertThat(result).isEqualTo(trie(vec(), map(
-                        tup("0", trie(vec(), map(
-                                tup("x", trie(vec(), map()))))),
-                        tup("1", trie(vec(), map(
-                                tup("x", trie(vec(), map()))))),
-                        tup("2", trie(vec(), map(
-                                tup("x", trie(vec(), map()))))),
-                        tup("3", trie(vec(), map(
-                                tup("x", trie(vec(), map()))))),
-                        tup("4", trie(vec(), map(
-                                tup("x", trie(vec(), map()))))))));
+                assertThat(result).isEqualTo(
+                    validationResult(
+                        trie(vec(), map(
+                            tup("0", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))))),
+                            tup("1", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))))),
+                            tup("2", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))))),
+                            tup("3", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))))),
+                            tup("4", trie(vec(), map(
+                                    tup("x", trie(vec(), map()))))))),
+                        points,
+                        vec(1, 1, 1, 1, 1)));
             }
 
             @Test
             @DisplayName("Return a trie with the errors of all failed validators")
             void t1() {
-                assertThat(listOfPointValidator.apply(vec(
+                @NotNull
+                ImList<Point> points = vec(
                         new Point(0),
                         new Point(0),
                         new Point(0),
                         new Point(0),
-                        new Point(0)))).isEqualTo(trie(vec(), map(
-                                tup("0", trie(vec(), map(
-                                        tup("x", trie(vec("Should be gt 0"), map()))))),
-                                tup("1", trie(vec(), map(
-                                        tup("x", trie(vec("Should be gt 0"), map()))))),
-                                tup("2", trie(vec(), map(
-                                        tup("x", trie(vec("Should be gt 0"), map()))))),
-                                tup("3", trie(vec(), map(
-                                        tup("x", trie(vec("Should be gt 0"), map()))))),
-                                tup("4", trie(vec(), map(
-                                        tup("x", trie(vec("Should be gt 0"), map()))))))));
+                        new Point(0));
+                assertThat(listOfPointValidator.apply(points)).isEqualTo(
+                            validationResult(
+                                trie(vec(), map(
+                                    tup("0", trie(vec(), map(
+                                            tup("x", trie(vec("Should be gt 0"), map()))))),
+                                    tup("1", trie(vec(), map(
+                                            tup("x", trie(vec("Should be gt 0"), map()))))),
+                                    tup("2", trie(vec(), map(
+                                            tup("x", trie(vec("Should be gt 0"), map()))))),
+                                    tup("3", trie(vec(), map(
+                                            tup("x", trie(vec("Should be gt 0"), map()))))),
+                                    tup("4", trie(vec(), map(
+                                            tup("x", trie(vec("Should be gt 0"), map()))))))),
+                                points,
+                                vec(null, null, null, null, null)));
             }
 
             class Point {
@@ -315,23 +376,33 @@ public class CoreUnitTest {
         @DisplayName("Returns an invalid trie with the given error if the validated value is null")
         void t0() {
             assertThat(pointValidator.validate(null))
-                    .isEqualTo(trie(vec("Required"), map()));
+                    .isEqualTo(validationResult(trie(vec("Required"), map()), null, null));
         }
 
         @Test
         @DisplayName("Returns an invalid trie with the errors of the validators if the validated value is not null and invalid")
         void t1() {
-            assertThat(pointValidator.validate(new Point(-1)))
-                    .isEqualTo(trie(vec(), map(
-                            tup("x", trie(vec("Should be gt 0"), map())))));
+            Point aPoint = new Point(-1);
+            assertThat(pointValidator.validate(aPoint))
+                    .isEqualTo(
+                        validationResult(
+                            trie(vec(), map(
+                                tup("x", trie(vec("Should be gt 0"), map())))),
+                            aPoint,
+                            null));
         }
 
         @Test
         @DisplayName("Returns an valid trie if the validated value is not null and valid")
         void t2() {
-            assertThat(pointValidator.validate(new Point(1)))
-                    .isEqualTo(trie(vec(), map(
-                            tup("x", trie(vec(), map())))));
+            Point aPoint = new Point(1);
+            assertThat(pointValidator.validate(aPoint))
+                    .isEqualTo(
+                        validationResult(
+                            trie(vec(), map(
+                                tup("x", trie(vec(), map())))),
+                            aPoint,
+                            1));
         }
 
         class Point {
@@ -362,25 +433,34 @@ public class CoreUnitTest {
         @DisplayName("Returns a valid trie if the validated value is null") 
         void t0() {
             assertThat(pointValidator.validate(null))
-                    .isEqualTo(trie(vec(), map()));
+                    .isEqualTo(
+                        validationResult(trie(vec(), map()), null, null));
         }
 
         @Test
         @DisplayName("Returns a valid trie if the validated value is not null and is valid") 
         void t1() {
-            assertThat(pointValidator.validate(new Point(1)))
-                    .isEqualTo(trie(vec(), map(
-                        tup("x", trie(vec(), map()))
-                    )));
+            Point aPoint = new Point(1);
+            assertThat(pointValidator.validate(aPoint))
+                    .isEqualTo(
+                        validationResult(
+                            trie(vec(), map(
+                                tup("x", trie(vec(), map())))),
+                            aPoint,
+                            1));
         }
 
         @Test
         @DisplayName("Returns a invalid trie if the validated value is not null and is invalid")
         void t2() {
-            assertThat(pointValidator.validate(new Point(-1)))
-                    .isEqualTo(trie(vec(), map(
-                        tup("x", trie(vec("Should be gt 0"), map()))
-                    )));
+            Point aPoint = new Point(-1);
+            assertThat(pointValidator.validate(aPoint))
+                    .isEqualTo(
+                        validationResult(
+                            trie(vec(), map(
+                                tup("x", trie(vec("Should be gt 0"), map())))),
+                            aPoint,
+                            null));
         }
 
         class Point {

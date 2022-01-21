@@ -66,7 +66,7 @@ public final class ObjectValidators {
         return a(Map.class, validator, _v -> lazyE.get());
     }
 
-    public static <K, T, U, E> Validator<Object, U, E> mapXform(Validator<Map<K, T>, U, E> validator,
+    public static <K, T, U, E> Validator<Object, U, E> nestedMap(Validator<Map<K, T>, U, E> validator,
                                                     Function<Object, E> errorFn) {
         return a(Map.class, validator, errorFn);
     }

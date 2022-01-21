@@ -18,7 +18,7 @@ public class ValidatorsUnitTest {
         @Test
         @DisplayName("Should fail if the value is null")
         public void test() {
-            ValidationResult<String, Object, Object> result = required(() -> "Required").apply("");
+            ValidationResult<String, Object, Object> result = required(() -> "Required").apply(null);
 
             assertAll(
                 () -> assertThat(result.isInvalid()).isTrue(),

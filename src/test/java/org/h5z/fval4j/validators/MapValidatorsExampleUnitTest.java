@@ -91,25 +91,22 @@ public final class MapValidatorsExampleUnitTest {
 
     @Test
     public void example4() {
-
-        Validator<Map<String, Object>, Tuple2<String, String>, ValidationError> kv = kv("address", required(mapXform(every(
-                    kv("street", required(string(lengthBetween(5, 10)))),
-                    kv("city", required(string(lengthBetween(5, 10)))),
-                    Tuple2::new
-                ))));
-
             Validator<Map<String, Object>, Tuple3<Integer, String, Tuple2<String, String>>, ValidationError> mapValidator = every(
-                kv("firstName", required(
-                                    integer(
-                                        gt(1)))),
-                kv("lastName",  optional(
-                                    string(
-                                        lengthBetween(5, 10)))),
-                kv("address", required(mapXform(every(
-                    kv("street", required(string(lengthBetween(5, 10)))),
-                    kv("city", required(string(lengthBetween(5, 10)))),
-                    (a, b) -> new Tuple2<String, String>(a, b)
-                )))),
+                kv("firstName", 
+                    required(
+                        integer(gt(1)))),
+                        
+                kv("lastName",  
+                    optional(
+                        string(lengthBetween(5, 10)))),
+
+                kv("address", 
+                    required(
+                        nestedMap(
+                            every(
+                                kv("street", required(string(lengthBetween(5, 10)))),
+                                kv("city", required(string(lengthBetween(5, 10)))),
+                                (a, b) -> new Tuple2<String, String>(a, b))))),
                 Tuple3::new
             );
 

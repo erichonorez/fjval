@@ -27,8 +27,8 @@ public final class ObjectValidators {
         return org.h5z.fval4j.validators.ObjectValidators.map(validator, _v -> ValidationError.error("NotAMap"));
     }
 
-    public static <K, T, U, E> Validator<Object, U, ValidationError> mapXform(Validator<Map<K, T>, U, ValidationError> validator) {
-        return org.h5z.fval4j.validators.ObjectValidators.mapXform(validator, _v -> ValidationError.error("NotAMap"));
+    public static <K, T, U, E> Validator<Object, U, ValidationError> nestedMap(Validator<Map<K, T>, U, ValidationError> validator) {
+        return org.h5z.fval4j.validators.ObjectValidators.nestedMap(validator, _v -> ValidationError.error("NotAMap"));
     }
 
 }
