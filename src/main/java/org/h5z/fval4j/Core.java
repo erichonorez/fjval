@@ -120,15 +120,6 @@ public final class Core {
     }
 
     /**
-     * Creates a validator from other validatos. The resulting validator will pass
-     * if all the given validators passes.
-     *
-     * All of the validators are evaluated even if some of the fail.
-     *
-     * The errors returned by each validator are collected and returned.
-     */
-
-    /**
      * <b>Combinator</b> - Creates a validator that will execute all the
      * given validators and returns the aggregated results. This validator does not
      * stop at the first failed validator.
@@ -453,8 +444,8 @@ public final class Core {
     }
 
     /**
-     * Creates a validator that will apply the given validator only if the validator
-     * value is not null. If the validated value is null it return a valid trie.
+     * Creates a validator that will apply the given validator only if the validated
+     * value is not null. If the validated value is null it returns a valid trie.
      * Otherwise it executes the validator and returns its result.
      * 
      * @param <T>       the type of values validated

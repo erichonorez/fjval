@@ -17,8 +17,6 @@ import static org.organicdesign.fp.StaticImports.map;
 import static org.organicdesign.fp.StaticImports.tup;
 import static org.organicdesign.fp.StaticImports.vec;
 
-import java.util.Arrays;
-
 import org.h5z.fval4j.Core.Validator;
 import org.h5z.fval4j.data.ValidationResult;
 import org.jetbrains.annotations.NotNull;
