@@ -20,6 +20,9 @@ import org.h5z.fval4j.data.Prelude.Fn2;
 import org.h5z.fval4j.data.Prelude.F3;
 import org.h5z.fval4j.data.Prelude.Fn4;
 import org.h5z.fval4j.data.Prelude.Fn5;
+import org.h5z.fval4j.data.Prelude.Fn6;
+import org.h5z.fval4j.data.Prelude.Fn7;
+import org.h5z.fval4j.data.Prelude.Fn8;
 import org.organicdesign.fp.collections.ImList;
 
 public final class Core {
@@ -236,6 +239,89 @@ public final class Core {
         return t -> every(v0, v1, v2, v3, v4, (_1, _2, _3, _4, _5) -> t).apply(t);
     }
 
+    public static <T, U1, U2, U3, U4, U5, U6, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Fn6<U1, U2, U3, U4, U5, U6, X> fn) {
+        return t -> { 
+            ValidationResult<E, T, U1> apply0 = v0.apply(t);
+            ValidationResult<E, T, U2> apply1 = v1.apply(t);
+            ValidationResult<E, T, U3> apply2 = v2.apply(t);
+            ValidationResult<E, T, U4> apply3 = v3.apply(t);
+            ValidationResult<E, T, U5> apply4 = v4.apply(t);
+            ValidationResult<E, T, U6> apply5 = v5.apply(t);
+
+            if (apply0.isValid() && apply1.isValid() && apply2.isValid() && apply3.isValid() && apply4.isValid() && apply5.isValid()) {
+                return new ValidationResult<E, T, X>(
+                    apply0._1().merge(apply1._1()),
+                    t,
+                    fn.apply(apply0._3(), apply1._3(), apply2._3(), apply3._3(), apply4._3(), apply5._3())
+                );
+            }
+            return new ValidationResult<E, T, X>(
+                apply0._1().merge(apply1._1()).merge(apply2._1()).merge(apply3._1()).merge(apply4._1()).merge(apply5._1()),
+                t,
+                null);
+        };
+    }
+
+    public static <T, U1, U2, U3, U4, U5, U6, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5) {
+        return t -> every(v0, v1, v2, v3, v4, v5, (_1, _2, _3, _4, _5, _6) -> t).apply(t);
+    }
+
+    public static <T, U1, U2, U3, U4, U5, U6, U7, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6, Fn7<U1, U2, U3, U4, U5, U6, U7, X> fn) {
+        return t -> { 
+            ValidationResult<E, T, U1> apply0 = v0.apply(t);
+            ValidationResult<E, T, U2> apply1 = v1.apply(t);
+            ValidationResult<E, T, U3> apply2 = v2.apply(t);
+            ValidationResult<E, T, U4> apply3 = v3.apply(t);
+            ValidationResult<E, T, U5> apply4 = v4.apply(t);
+            ValidationResult<E, T, U6> apply5 = v5.apply(t);
+            ValidationResult<E, T, U7> apply6 = v6.apply(t);
+
+            if (apply0.isValid() && apply1.isValid() && apply2.isValid() && apply3.isValid() && apply4.isValid() && apply5.isValid() && apply6.isValid()) {
+                return new ValidationResult<E, T, X>(
+                    apply0._1().merge(apply1._1()),
+                    t,
+                    fn.apply(apply0._3(), apply1._3(), apply2._3(), apply3._3(), apply4._3(), apply5._3(), apply6._3())
+                );
+            }
+            return new ValidationResult<E, T, X>(
+                apply0._1().merge(apply1._1()).merge(apply2._1()).merge(apply3._1()).merge(apply4._1()).merge(apply5._1()).merge(apply6._1()),
+                t,
+                null);
+        };
+    }
+
+    public static <T, U1, U2, U3, U4, U5, U6, U7, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6) {
+        return t -> every(v0, v1, v2, v3, v4, v5, v6, (_1, _2, _3, _4, _5, _6, _7) -> t).apply(t);
+    }
+
+    public static <T, U1, U2, U3, U4, U5, U6, U7, U8, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6, Validator<T, U8, E> v7 ,Fn8<U1, U2, U3, U4, U5, U6, U7, U8, X> fn) {
+        return t -> { 
+            ValidationResult<E, T, U1> apply0 = v0.apply(t);
+            ValidationResult<E, T, U2> apply1 = v1.apply(t);
+            ValidationResult<E, T, U3> apply2 = v2.apply(t);
+            ValidationResult<E, T, U4> apply3 = v3.apply(t);
+            ValidationResult<E, T, U5> apply4 = v4.apply(t);
+            ValidationResult<E, T, U6> apply5 = v5.apply(t);
+            ValidationResult<E, T, U7> apply6 = v6.apply(t);
+            ValidationResult<E, T, U8> apply7 = v7.apply(t);
+
+            if (apply0.isValid() && apply1.isValid() && apply2.isValid() && apply3.isValid() && apply4.isValid() && apply5.isValid() && apply6.isValid() && apply7.isValid()) {
+                return new ValidationResult<E, T, X>(
+                    apply0._1().merge(apply1._1()),
+                    t,
+                    fn.apply(apply0._3(), apply1._3(), apply2._3(), apply3._3(), apply4._3(), apply5._3(), apply6._3(), apply7._3())
+                );
+            }
+            return new ValidationResult<E, T, X>(
+                apply0._1().merge(apply1._1()).merge(apply2._1()).merge(apply3._1()).merge(apply4._1()).merge(apply5._1()).merge(apply6._1()).merge(apply7._1()),
+                t,
+                null);
+        };
+    }
+
+    public static <T, U1, U2, U3, U4, U5, U6, U7, U8, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6, Validator<T, U8, E> v7) {
+        return t -> every(v0, v1, v2, v3, v4, v5, v6, v7, (_1, _2, _3, _4, _5, _6, _7, _8) -> t).apply(t);
+    }
     
     public static <T, U, E> Validator<T, U, E> any(List<Validator<T, U, E>> validators) {
         return v -> {
