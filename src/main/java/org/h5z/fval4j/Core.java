@@ -135,14 +135,14 @@ public final class Core {
      *         all failed validators otherwise.
      */
     @SafeVarargs
-    public static <T, U, E> Validator<T, U, E> every(Validator<T, U, E>... validators) {
-        return every(vec(validators));
+    public static <T, U, E> Validator<T, U, E> all(Validator<T, U, E>... validators) {
+        return all(vec(validators));
     }
 
     /**
-     * @see {@link Core#every(Validator...)}
+     * @see {@link Core#all(Validator...)}
      */
-    public static <T, U, E> Validator<T, U, E> every(List<Validator<T, U, E>> validators) {
+    public static <T, U, E> Validator<T, U, E> all(List<Validator<T, U, E>> validators) {
         return v -> xform(validators)
                 .map(fn -> fn.apply(v))
                 .fold(
@@ -153,7 +153,7 @@ public final class Core {
                         b._3()));
     }
 
-    public static <T, U1, U2, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Fn2<U1, U2, X> fn) {
+    public static <T, U1, U2, E, X> Validator<T, X, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Fn2<U1, U2, X> fn) {
         return t -> { 
             ValidationResult<E, T, U1> apply0 = v0.apply(t);
             ValidationResult<E, T, U2> apply1 = v1.apply(t);
@@ -171,11 +171,11 @@ public final class Core {
         };
     }
 
-    public static <T, U1, U2, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1) {
-        return t -> every(v0, v1, (_a, _b) -> t).apply(t);
+    public static <T, U1, U2, E> Validator<T, T, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1) {
+        return t -> all(v0, v1, (_a, _b) -> t).apply(t);
     }
 
-    public static <T, U1, U2, U3, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, F3<U1, U2, U3, X> fn) {
+    public static <T, U1, U2, U3, E, X> Validator<T, X, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, F3<U1, U2, U3, X> fn) {
         return t -> {
             ValidationResult<E, T, U1> apply0 = v0.apply(t);
             ValidationResult<E, T, U2> apply1 = v1.apply(t);
@@ -192,7 +192,11 @@ public final class Core {
         };
     }
 
-    public static <T, U1, U2, U3, U4, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Fn4<U1, U2, U3, U4, X> fn) {
+    public static <T, U1, U2, U3, E> Validator<T, T, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2) {
+        return t -> all(v0, v1, v2, (_1, _2, _3) -> t).apply(t);
+    }
+
+    public static <T, U1, U2, U3, U4, E, X> Validator<T, X, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Fn4<U1, U2, U3, U4, X> fn) {
         return t -> { 
             ValidationResult<E, T, U1> apply0 = v0.apply(t);
             ValidationResult<E, T, U2> apply1 = v1.apply(t);
@@ -213,7 +217,11 @@ public final class Core {
         };
     }
 
-    public static <T, U1, U2, U3, U4, U5, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Fn5<U1, U2, U3, U4, U5, X> fn) {
+    public static <T, U1, U2, U3, U4, E> Validator<T, T, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3) {
+        return t -> all(v0, v1, v2, v3, (_1, _2, _3, _4) -> t).apply(t);
+    }
+
+    public static <T, U1, U2, U3, U4, U5, E, X> Validator<T, X, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Fn5<U1, U2, U3, U4, U5, X> fn) {
         return t -> { 
             ValidationResult<E, T, U1> apply0 = v0.apply(t);
             ValidationResult<E, T, U2> apply1 = v1.apply(t);
@@ -235,8 +243,8 @@ public final class Core {
         };
     }
 
-    public static <T, U1, U2, U3, U4, U5, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4) {
-        return t -> every(v0, v1, v2, v3, v4, (_1, _2, _3, _4, _5) -> t).apply(t);
+    public static <T, U1, U2, U3, U4, U5, E> Validator<T, T, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4) {
+        return t -> all(v0, v1, v2, v3, v4, (_1, _2, _3, _4, _5) -> t).apply(t);
     }
 
     public static <T, U1, U2, U3, U4, U5, U6, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Fn6<U1, U2, U3, U4, U5, U6, X> fn) {
@@ -262,7 +270,7 @@ public final class Core {
         };
     }
 
-    public static <T, U1, U2, U3, U4, U5, U6, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5) {
+    public static <T, U1, U2, U3, U4, U5, U6, E> Validator<T, T, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5) {
         return t -> every(v0, v1, v2, v3, v4, v5, (_1, _2, _3, _4, _5, _6) -> t).apply(t);
     }
 
@@ -290,11 +298,11 @@ public final class Core {
         };
     }
 
-    public static <T, U1, U2, U3, U4, U5, U6, U7, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6) {
+    public static <T, U1, U2, U3, U4, U5, U6, U7, E> Validator<T, T, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6) {
         return t -> every(v0, v1, v2, v3, v4, v5, v6, (_1, _2, _3, _4, _5, _6, _7) -> t).apply(t);
     }
 
-    public static <T, U1, U2, U3, U4, U5, U6, U7, U8, E, X> Validator<T, X, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6, Validator<T, U8, E> v7 ,Fn8<U1, U2, U3, U4, U5, U6, U7, U8, X> fn) {
+    public static <T, U1, U2, U3, U4, U5, U6, U7, U8, E, X> Validator<T, X, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6, Validator<T, U8, E> v7 ,Fn8<U1, U2, U3, U4, U5, U6, U7, U8, X> fn) {
         return t -> { 
             ValidationResult<E, T, U1> apply0 = v0.apply(t);
             ValidationResult<E, T, U2> apply1 = v1.apply(t);
@@ -319,8 +327,8 @@ public final class Core {
         };
     }
 
-    public static <T, U1, U2, U3, U4, U5, U6, U7, U8, E> Validator<T, T, E> every(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6, Validator<T, U8, E> v7) {
-        return t -> every(v0, v1, v2, v3, v4, v5, v6, v7, (_1, _2, _3, _4, _5, _6, _7, _8) -> t).apply(t);
+    public static <T, U1, U2, U3, U4, U5, U6, U7, U8, E> Validator<T, T, E> all(Validator<T, U1, E> v0, Validator<T, U2, E> v1, Validator<T, U3, E> v2, Validator<T, U4, E> v3, Validator<T, U5, E> v4, Validator<T, U6, E> v5, Validator<T, U7, E> v6, Validator<T, U8, E> v7) {
+        return t -> all(v0, v1, v2, v3, v4, v5, v6, v7, (_1, _2, _3, _4, _5, _6, _7, _8) -> t).apply(t);
     }
     
     public static <T, U, E> Validator<T, U, E> any(List<Validator<T, U, E>> validators) {
@@ -385,9 +393,9 @@ public final class Core {
      * <b>Combinator</b> - Creates a validator that will validate all the elements
      * of a list with the given validator. The validator will validates all the
      * elements of the list and return the collected errors.
-     * It has the same behavior than {@link Core#every(Validator...)}
+     * It has the same behavior than {@link Core#all(Validator...)}
      * 
-     * @see {@link Core#every(Validator...)}
+     * @see {@link Core#all(Validator...)}
      * 
      * @param <V>       the type of the values in the list to validate
      * @param <T>       the type of the list

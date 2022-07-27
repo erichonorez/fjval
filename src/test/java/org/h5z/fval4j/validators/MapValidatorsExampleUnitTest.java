@@ -24,7 +24,7 @@ public final class MapValidatorsExampleUnitTest {
     
     @Test
     public void example1() {
-        Validator<Map<String, Object>, Tuple2<Integer, String>, ValidationError> mapValidator = every(
+        Validator<Map<String, Object>, Tuple2<Integer, String>, ValidationError> mapValidator = all(
             value(
                 "un", 
                 integer(gt(1), _i -> ValidationError.error("NotAnInteger")), 
@@ -42,7 +42,7 @@ public final class MapValidatorsExampleUnitTest {
     @Test
     public void example2() {
         Validator<Map<String, Object>, Tuple2<Integer, String>, ValidationError> mapValidator = 
-            every(
+            all(
                 kv(
                     "un", 
                     required(
@@ -69,7 +69,7 @@ public final class MapValidatorsExampleUnitTest {
     @Test
     public void example3() {
         Validator<Map<String, Object>, Tuple2<Integer, String>, ValidationError> mapValidator = 
-            every(
+            all(
                 kv(
                     "un", 
                     required(
@@ -91,7 +91,7 @@ public final class MapValidatorsExampleUnitTest {
 
     @Test
     public void example4() {
-            Validator<Map<String, Object>, Tuple3<Integer, String, Tuple2<String, String>>, ValidationError> mapValidator = every(
+            Validator<Map<String, Object>, Tuple3<Integer, String, Tuple2<String, String>>, ValidationError> mapValidator = all(
                 kv("firstName", 
                     required(
                         integer(gt(1)))),
@@ -103,7 +103,7 @@ public final class MapValidatorsExampleUnitTest {
                 kv("address", 
                     required(
                         nestedMap(
-                            every(
+                            all(
                                 kv("street", required(string(lengthBetween(5, 10)))),
                                 kv("city", required(string(lengthBetween(5, 10)))),
                                 (a, b) -> new Tuple2<String, String>(a, b))))),
@@ -121,13 +121,13 @@ public final class MapValidatorsExampleUnitTest {
     @Test
     public void example5() {
         
-        var personValidator = every(
+        var personValidator = all(
             required("firstName",
                      Person::firtName,
                      lengthBetween(2, 10)),
             required("address",
                      Person::address,
-                     every(
+                     all(
                          required("city",
                                   Address::city,
                                   lengthBetween(2, 10))))); //TODO fixme

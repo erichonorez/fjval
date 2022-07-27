@@ -128,7 +128,7 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns a valid trie if all validators succeeded")
         void t0() {
-            Validator<Integer, Integer, String> every = every(
+            Validator<Integer, Integer, String> every = all(
                     keyed("x", gt(0, () -> "Should be gt 0")),
                     keyed("y", gt(0, () -> "Should be gt 0")));
 
@@ -146,7 +146,7 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns a trie with the errors of all failed validators otherwise.")
         void t1() {
-            Validator<Integer, Integer, String> every = every(
+            Validator<Integer, Integer, String> every = all(
                     keyed("a", gt(-1, () -> "Should be gt -1")),
                     keyed("b", gt(1, () -> "Should be gt 1")),
                     keyed("c", gt(2, () -> "Should be gt 2")),

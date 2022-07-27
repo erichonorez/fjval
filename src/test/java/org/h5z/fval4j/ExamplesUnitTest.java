@@ -28,7 +28,7 @@ public class ExamplesUnitTest {
         // The validator must apply all the validators (no fail-fast).
         @Test
         void example0() {
-            Validator<String, String, String> usernameValidator = every( // 'every' will execute all the validator even one of
+            Validator<String, String, String> usernameValidator = all( // 'every' will execute all the validator even one of
                                                                  // them fails
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                     lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
@@ -114,7 +114,7 @@ public class ExamplesUnitTest {
                     Validator<String, String, String> lastNameValidator = firstNameValidator; // Same validation for the first name and
                                                                                     // the last name
 
-                    Validator<String, String, String> usernameValidator = every(
+                    Validator<String, String, String> usernameValidator = all(
                             matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                             lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
@@ -128,7 +128,7 @@ public class ExamplesUnitTest {
                             () -> "Passwords must match");
 
                     Validator<SignUpForm, SignUpForm, String> formValidator = sequentially( // stops after the first failed validator
-                            every(
+                            all(
                                     prop(SignUpForm::firstName, optional(firstNameValidator)), // first name may be null
                                     prop(SignUpForm::lastName, optional(lastNameValidator)), // last name may be null
                                     prop(SignUpForm::userName, required(usernameValidator, () -> "A username is mandatory")),
@@ -180,7 +180,7 @@ public class ExamplesUnitTest {
                     Validator<SignUpForm, SignUpForm, ValidationError> formValidator =
                         sequentially(
                                 // The properties are all validated first
-                                every(
+                                all(
                                         // The firstName property is optional
                                         // If present the length should be between 3 and 42
                                         prop(SignUpForm::firstName, 
@@ -200,7 +200,7 @@ public class ExamplesUnitTest {
                                         // It must have a length between 3 and 16
                                         prop(SignUpForm::userName, 
                                             required(
-                                                every(
+                                                all(
                                                     matches("^[\\w]+$", () -> new UserNameComplexityError()),
                                                     lengthBetween(3, 16, () -> new UserNameLengthError())
                                                 ), 
@@ -290,7 +290,7 @@ public class ExamplesUnitTest {
         @DisplayName("Simple example")
         void example0() {
             // Let's first create a validator for a user name 
-            Validator<String, String, String> usernameValidator = every(
+            Validator<String, String, String> usernameValidator = all(
                     matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                     lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
@@ -314,7 +314,7 @@ public class ExamplesUnitTest {
         @DisplayName("Sign up form validation")
         void example1() {
             Validator<SignUpForm, SignUpForm, SignUpFormError> formValidator = sequentially(
-                every(
+                all(
                     keyed("firstName", 
                         optional(SignUpForm::firstName, 
                             lengthBetween(3, 42, () -> new FirstNameLengthError()))),
@@ -325,7 +325,7 @@ public class ExamplesUnitTest {
 
                     keyed("userName",
                         required(SignUpForm::userName, 
-                                every(
+                                all(
                                     matches("^[\\w]+$", () -> new UserNameComplexityError()),
                                     lengthBetween(3, 16, () -> new UserNameLengthError())
                                 ), 
@@ -380,7 +380,7 @@ public class ExamplesUnitTest {
         @DisplayName("Sign up form with more concise api")
         void example2() {
             Validator<SignUpForm, SignUpForm, SignUpFormError> formValidator = sequentially(
-                every(
+                all(
                     optional("firstName", 
                              SignUpForm::firstName, 
                              lengthBetween(3, 42, () -> new FirstNameLengthError())),
@@ -391,7 +391,7 @@ public class ExamplesUnitTest {
 
                     required("userName",
                              SignUpForm::userName, 
-                             every(
+                             all(
                                  matches("^[\\w]+$", () -> new UserNameComplexityError()),
                                  lengthBetween(3, 16, () -> new UserNameLengthError())
                              ), 
@@ -446,7 +446,7 @@ public class ExamplesUnitTest {
         @DisplayName("Sign up form with default errors")
         void example3() {
             Validator<SignUpForm, SignUpForm, DefaultErrors.ValidationError> formValidator = sequentially(
-                every(
+                all(
                     optional("firstName", 
                              SignUpForm::firstName, 
                              lengthBetween(3, 42)),
@@ -457,7 +457,7 @@ public class ExamplesUnitTest {
 
                     required("userName",
                              SignUpForm::userName, 
-                             every(
+                             all(
                                  matches("^[\\w]+$"),
                                  lengthBetween(3, 16)
                              )),
