@@ -65,7 +65,7 @@ public class ExamplesUnitTest {
         // The validator must fail at the first failed validator (fail-fast).
         @Test
         void example1() {
-            Validator<String, String, String> passwordValidator = sequentially( // 'sequentially' will execute all the validator
+            Validator<String, String, String> passwordValidator = and( // 'sequentially' will execute all the validator
                                                                         // and stop at the first failed validator
                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                             () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
@@ -118,7 +118,7 @@ public class ExamplesUnitTest {
                             matches("^[\\w]+$", () -> "It must only contain alphanumeric characters and '_'"),
                             lengthBetween(3, 16, () -> "The length must be between 3 and 16"));
 
-                    Validator<String, String, String> passwordValidator = sequentially(
+                    Validator<String, String, String> passwordValidator = and(
                             matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                     () -> "Password should contains lower case letters, upper case letters, digits and special characters (!, $, #, or %)"),
                             lengthBetween(8, 42, () -> "The length must be between 8 and 42"));
@@ -127,7 +127,7 @@ public class ExamplesUnitTest {
                             form -> form.password().equals(form.passwordConfirmation()),
                             () -> "Passwords must match");
 
-                    Validator<SignUpForm, SignUpForm, String> formValidator = sequentially( // stops after the first failed validator
+                    Validator<SignUpForm, SignUpForm, String> formValidator = and( // stops after the first failed validator
                             all(
                                     prop(SignUpForm::firstName, optional(firstNameValidator)), // first name may be null
                                     prop(SignUpForm::lastName, optional(lastNameValidator)), // last name may be null
@@ -178,7 +178,7 @@ public class ExamplesUnitTest {
                 @Test
                 void example() {
                     Validator<SignUpForm, SignUpForm, ValidationError> formValidator =
-                        sequentially(
+                        and(
                                 // The properties are all validated first
                                 all(
                                         // The firstName property is optional
@@ -211,7 +211,7 @@ public class ExamplesUnitTest {
                                         // It must contains upper case and lower case letter, numbers and special characters
                                         prop(SignUpForm::password, 
                                             required(
-                                                sequentially(
+                                                and(
                                                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                                         () -> new PasswordComplexityError()),
                                                     lengthBetween(8, 42, () -> new PasswordLengthError())
@@ -313,7 +313,7 @@ public class ExamplesUnitTest {
         @Test
         @DisplayName("Sign up form validation")
         void example1() {
-            Validator<SignUpForm, SignUpForm, SignUpFormError> formValidator = sequentially(
+            Validator<SignUpForm, SignUpForm, SignUpFormError> formValidator = and(
                 all(
                     keyed("firstName", 
                         optional(SignUpForm::firstName, 
@@ -333,7 +333,7 @@ public class ExamplesUnitTest {
 
                     keyed("password",
                         required(SignUpForm::password, 
-                                sequentially(
+                                and(
                                     matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                         () -> new PasswordComplexityError()),
                                     lengthBetween(8, 42, () -> new PasswordLengthError())
@@ -379,7 +379,7 @@ public class ExamplesUnitTest {
         @Test
         @DisplayName("Sign up form with more concise api")
         void example2() {
-            Validator<SignUpForm, SignUpForm, SignUpFormError> formValidator = sequentially(
+            Validator<SignUpForm, SignUpForm, SignUpFormError> formValidator = and(
                 all(
                     optional("firstName", 
                              SignUpForm::firstName, 
@@ -399,7 +399,7 @@ public class ExamplesUnitTest {
 
                     required("password",
                              SignUpForm::password, 
-                            sequentially(
+                            and(
                                 matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$",
                                     () -> new PasswordComplexityError()),
                                 lengthBetween(8, 42, () -> new PasswordLengthError())
@@ -410,7 +410,6 @@ public class ExamplesUnitTest {
                              SignUpForm::passwordConfirmation,
                              identity(),
                              () -> new ConfirmedPasswordRequiredError())),
-
                 globally(
                     cond(
                         form -> form.password().equals(form.passwordConfirmation()),
@@ -445,7 +444,9 @@ public class ExamplesUnitTest {
         @Test
         @DisplayName("Sign up form with default errors")
         void example3() {
-            Validator<SignUpForm, SignUpForm, DefaultErrors.ValidationError> formValidator = sequentially(
+            Validator<SignUpForm, SignUpForm, DefaultErrors.ValidationError> formValidator = 
+            
+            and(
                 all(
                     optional("firstName", 
                              SignUpForm::firstName, 
@@ -464,7 +465,7 @@ public class ExamplesUnitTest {
 
                     required("password",
                              SignUpForm::password, 
-                            sequentially(
+                            and(
                                 matches("^.*(?=.{3,})(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[!$#%]).*$"),
                                 lengthBetween(8, 42)
                             )),
@@ -472,7 +473,6 @@ public class ExamplesUnitTest {
                     required("passwordConfirmation",
                              SignUpForm::passwordConfirmation,
                              identity())),
-
                 globally(
                     cond(
                         form -> form.password().equals(form.passwordConfirmation()),

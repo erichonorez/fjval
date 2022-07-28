@@ -2,7 +2,7 @@ package org.h5z.fval4j;
 
 import static org.h5z.fval4j.Core.any;
 import static org.h5z.fval4j.Core.not;
-import static org.h5z.fval4j.Core.sequentially;
+import static org.h5z.fval4j.Core.and;
 import static org.h5z.fval4j.data.ValidationResult.invalid;
 import static org.h5z.fval4j.data.ValidationResult.valid;
 
@@ -50,7 +50,7 @@ public final class Validators {
     }
 
     public static <T extends Comparable<T>, E> Validator<T, T, E> lt(T b, Function<T, E> errorFn) {
-        return sequentially(
+        return and(
                     not(eq(b, errorFn), errorFn), 
                     not(gt(b, errorFn), errorFn));
     }
@@ -68,13 +68,13 @@ public final class Validators {
     }
 
     public static <T extends Comparable<T>, E> Validator<T, T, E> between(T a, T b, Function<T, E> errorFn) {
-        return sequentially(
+        return and(
                     gte(a, errorFn), 
                     lte(b, errorFn));
     }
 
     public static <T extends Comparable<T>, E> Validator<T, T, E> between(T a, T b, Supplier<E> lazyE) {
-        return sequentially(
+        return and(
                     gte(a, lazyE), 
                     lte(b, lazyE));
     }

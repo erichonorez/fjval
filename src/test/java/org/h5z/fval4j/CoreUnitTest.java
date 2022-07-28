@@ -1,13 +1,13 @@
 package org.h5z.fval4j;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.h5z.fval4j.Core.every;
+import static org.h5z.fval4j.Core.all;
 import static org.h5z.fval4j.Core.keyed;
 import static org.h5z.fval4j.Core.list;
 import static org.h5z.fval4j.Core.optional;
 import static org.h5z.fval4j.Core.prop;
 import static org.h5z.fval4j.Core.required;
-import static org.h5z.fval4j.Core.sequentially;
+import static org.h5z.fval4j.Core.and;
 import static org.h5z.fval4j.Trie.trie;
 import static org.h5z.fval4j.data.ValidationResult.invalid;
 import static org.h5z.fval4j.data.ValidationResult.valid;
@@ -81,13 +81,13 @@ public class CoreUnitTest {
     }
 
     @Nested
-    @DisplayName("sequentially")
+    @DisplayName("and")
     class Sequentially {
 
         @Test
         @DisplayName("Returns a valid trie if all validators succeed")
         void t0() {
-            Validator<Integer, Integer, String> sequentially = sequentially(
+            Validator<Integer, Integer, String> sequentially = and(
                     keyed("x", gt(0, () -> "Should be gt 0")),
                     keyed("y", gt(0, () -> "Should be gt 0")));
 
@@ -105,7 +105,7 @@ public class CoreUnitTest {
         @Test
         @DisplayName("Returns a trie with only the errors of the first failed validator")
         void t1() {
-            Validator<Integer, Integer, String> sequentially = sequentially(
+            Validator<Integer, Integer, String> sequentially = and(
                     keyed("x", gt(2, () -> "Should be gt 2")),
                     keyed("y", gt(0, () -> "Should be gt 0")));
 
@@ -122,7 +122,7 @@ public class CoreUnitTest {
     }
 
     @Nested
-    @DisplayName("every")
+    @DisplayName("all")
     class Every {
 
         @Test

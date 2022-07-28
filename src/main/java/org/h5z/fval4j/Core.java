@@ -82,9 +82,9 @@ public final class Core {
         return keyed(Trie.ROOT_KEY, validator);
     }
 
-    public static <T, U, E> Validator<T, U, E> sequentially(List<Validator<T, U, E>> validators) {
+    public static <T, U, E> Validator<T, U, E> and(List<Validator<T, U, E>> validators) {
         return v -> {
-            return recurSequentially(v, xform(validators).toImList(), ValidationResult.identity());
+            return recurAnd(v, xform(validators).toImList(), ValidationResult.identity());
         };
     }
 
@@ -101,11 +101,11 @@ public final class Core {
      *         of the first failed validator otherwise.
      */
     @SafeVarargs
-    public static <T, U, E> Validator<T, U, E> sequentially(Validator<T, U, E>... validators) {
-        return sequentially(Arrays.asList(validators));
+    public static <T, U, E> Validator<T, U, E> and(Validator<T, U, E>... validators) {
+        return and(Arrays.asList(validators));
     }
 
-    private static <T, U, E> ValidationResult<E, T, U> recurSequentially(T value, ImList<Validator<T, U, E>> validators, ValidationResult<E, T, U> acc) {
+    private static <T, U, E> ValidationResult<E, T, U> recurAnd(T value, ImList<Validator<T, U, E>> validators, ValidationResult<E, T, U> acc) {
         return validators.head()
                 .match(v -> {
                     ValidationResult<E, T, U> validated = v.validate(value);
@@ -117,7 +117,7 @@ public final class Core {
                     if (validated.isInvalid()) {
                         return newAcc;
                     }
-                    return recurSequentially(value, validators.drop(1).toImList(), newAcc);
+                    return recurAnd(value, validators.drop(1).toImList(), newAcc);
                 }, () -> acc);
 
     }
