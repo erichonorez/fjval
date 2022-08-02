@@ -12,6 +12,19 @@ import static org.organicdesign.fp.StaticImports.vec;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * A validation result is a tuple holding 3 values :
+ * <ul>
+ *  <li>A {@link Trie} of errors;</li>
+ *  <li>The value being validated in input;<li>
+ *  <li>The validated value.</li>
+ * </ul>
+ * 
+ * The input value and the validated value might have different type. That might happen if the {@link Validator} transforms the input before validation.
+ * 
+ * The validation result is invalid if its {@link Trie} is not empty. If the validation result is invalid the validated value is {@code null}.
+ * When the validation result is valid then the the validation result is not {@code null} and its {@link Trie} is empty.
+ */
 public final class ValidationResult<E, I, V> extends Tuple3<Trie<E>, I, V> {
     
     public ValidationResult(Trie<E> e, I i, V v) { 

@@ -15,12 +15,15 @@ import org.organicdesign.fp.collections.ImSet;
 import org.organicdesign.fp.function.Fn1;
 import org.organicdesign.fp.oneOf.Option;
 
+/**
+ * {@see https://en.wikipedia.org/wiki/Trie}
+ */
 public class Trie<E> {
 
     static final String ROOT_KEY = "";
     
-    final ImList<E> errors;
-    final ImMap<String, Trie<E>> children;
+    private final ImList<E> errors;
+    private final  ImMap<String, Trie<E>> children;
 
     /**
      * 
@@ -40,10 +43,19 @@ public class Trie<E> {
         this.children = children;
     }
 
+    /**
+     * @return errors at the root of this trie
+     */
     public List<E> getErrors() {
         return this.errors;
     }
 
+    /**
+     * Get the errors for the node of this trie with the given path.
+     * 
+     * @param path the path of the errors in this trie
+     * @return the errors at the given path
+     */
     public List<E> getErrors(List<String> path) {
         return this.get(path)
             .match(n -> n.getErrors(),
